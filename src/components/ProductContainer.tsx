@@ -1,0 +1,376 @@
+'use client';
+
+import { useState } from 'react';
+import { ChevronDown, Heart, MessageCircle, Plus, Lock } from 'lucide-react';
+
+interface ProductImage {
+  url: string;
+  alt: string;
+  badge?: string;
+  aspect?: 'square' | 'portrait';
+}
+
+export default function ProductContainer() {
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
+  const images: ProductImage[] = [
+    {
+      url: 'https://ext.same-assets.com/1796274538/3819574590.jpeg',
+      alt: 'The Amelia YG PR',
+      badge: 'Shown with 2 ct',
+      aspect: 'square',
+    },
+    {
+      url: 'https://ext.same-assets.com/1796274538/3805543934.jpeg',
+      alt: 'Product Detail on hand',
+      badge: 'Shown with 2 ct',
+      aspect: 'portrait',
+    },
+    {
+      url: 'https://ext.same-assets.com/1796274538/4209004885.jpeg',
+      alt: 'The Amelia YG PR Side View',
+      aspect: 'square',
+    },
+    {
+      url: 'https://ext.same-assets.com/1796274538/1054153675.jpeg',
+      alt: 'Pendant close up on model',
+      aspect: 'portrait',
+    },
+  ];
+
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
+
+  return (
+    <div className="step-three-view grid grid-cols-1 gap-0 custom-product-container mx-auto md:py-10 md:px-5">
+      <div className="grid md:grid-cols-2 gap-8 max-w-7xl mx-auto w-full px-4">
+        {/* Image Gallery Section */}
+        <div className="relative lg:sticky lg:top-10 self-start space-y-4 pb-16">
+          <div className="grid grid-cols-2 gap-4 rounded-[36px]">
+            {images.map((image, index) => (
+              <figure
+                key={`${image.alt}-${index}`}
+                className={`relative ${image.aspect === 'portrait' ? 'aspect-[3/4]' : 'aspect-square'} rounded-[32px] overflow-hidden bg-gray-50 shadow-[0_18px_45px_rgba(15,23,42,0.08)]`}
+              >
+                <img
+                  src={image.url}
+                  alt={image.alt}
+                  className="h-full w-full object-cover"
+                />
+                {image.badge && (
+                  <span className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 shadow-sm">
+                    {image.badge}
+                  </span>
+                )}
+              </figure>
+            ))}
+          </div>
+          <p className="text-center text-sm text-gray-500">
+            This gallery follows you as you scroll so you never lose sight of the pendant details.
+          </p>
+        </div>
+
+        {/* Product Details Section */}
+        <div className="flex flex-col space-y-6">
+          {/* Title */}
+          <div>
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-3xl font-normal text-gray-900">
+                The Amelia with a 1Ct Princess Cut Lab Created Sapphire
+              </h1>
+              <button className="flex flex-col items-center gap-1 p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 group whitespace-nowrap">
+                <svg className="w-6 h-6 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-xs font-medium">Drop a Hint</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Setting Info */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.5"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">The Amelia</h3>
+                  <p className="text-sm text-gray-600">14k Yellow Gold</p>
+                  <button className="text-sm text-gray-600 underline hover:text-gray-900">
+                    Change | View Details
+                  </button>
+                </div>
+              </div>
+              <p className="text-xl font-medium">$670</p>
+            </div>
+
+            {/* Stone Info */}
+            <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <rect x="6" y="6" width="8" height="8" stroke="currentColor" strokeWidth="1.5"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">Princess</h3>
+                  <p className="text-sm text-gray-600">1ct Vivid Blue</p>
+                  <button className="text-sm text-gray-600 underline hover:text-gray-900">
+                    Change | View Details
+                  </button>
+                </div>
+              </div>
+              <p className="text-xl font-medium">$500</p>
+            </div>
+          </div>
+
+          {/* Total Price */}
+          <div className="text-center py-4">
+            <p className="text-gray-600 text-sm mb-1">Total Price</p>
+            <p className="text-4xl font-light text-gray-900">$1,170</p>
+            <div className="flex items-center justify-center gap-2 mt-2 text-sm text-gray-600">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2v12M2 8l6-6 6 6" stroke="currentColor" strokeWidth="1.5"/>
+              </svg>
+              <span>Ships in 3-4 weeks</span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <button className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-900 transition-all duration-300 flex items-center justify-between px-8 group relative overflow-hidden shadow-lg hover:shadow-xl">
+              <Heart className="w-5 h-5 transition-all group-hover:scale-110 group-hover:fill-white" />
+              <span className="relative z-10 text-base">Secure Checkout</span>
+              <MessageCircle className="w-5 h-5 transition-all group-hover:scale-110" />
+            </button>
+
+            <button className="w-full border-2 border-black text-black py-4 rounded-full font-medium hover:bg-black hover:text-white transition-all duration-300 flex items-center justify-between px-8 group shadow-sm hover:shadow-md">
+              <Lock className="w-4 h-4 transition-all group-hover:scale-110" />
+              <span className="text-base">Add to Shopping Bag</span>
+              <Plus className="w-5 h-5 transition-all group-hover:rotate-90 group-hover:scale-110" />
+            </button>
+          </div>
+
+          {/* Payment Info */}
+          <p className="text-sm text-center text-gray-600">
+            Pay in 12 interest-free installments of $97.50{' '}
+            <button className="underline hover:text-gray-900">Learn more</button>
+          </p>
+
+          {/* Features */}
+          <div className="grid grid-cols-4 gap-4 py-6 border-y border-gray-200">
+            <div className="text-center group cursor-pointer">
+              <div className="mb-2 flex justify-center">
+                <svg className="w-8 h-8 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" strokeWidth="1.5" fill="currentColor"/>
+                </svg>
+              </div>
+              <p className="text-xs font-medium text-gray-900">Overnight</p>
+              <p className="text-xs text-gray-600">Shipping</p>
+            </div>
+
+            <div className="text-center group cursor-pointer">
+              <div className="mb-2 flex justify-center">
+                <svg className="w-8 h-8 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10" strokeWidth="1.5"/>
+                  <path d="M9 12l2 2 4-4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <p className="text-xs font-medium text-gray-900">Lifetime</p>
+              <p className="text-xs text-gray-600">Warranty</p>
+            </div>
+
+            <div className="text-center group cursor-pointer">
+              <div className="mb-2 flex justify-center">
+                <svg className="w-8 h-8 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" strokeWidth="1.5"/>
+                  <path d="M16 21l5-5-5-5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <p className="text-xs font-medium text-gray-900">30 Days</p>
+              <p className="text-xs text-gray-600">Free Return</p>
+            </div>
+
+            <div className="text-center group cursor-pointer">
+              <div className="mb-2 flex justify-center">
+                <svg className="w-8 h-8 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeWidth="1.5"/>
+                  <polyline points="14 2 14 8 20 8" strokeWidth="1.5"/>
+                  <line x1="9" y1="15" x2="15" y2="15" strokeWidth="1.5"/>
+                  <line x1="9" y1="12" x2="15" y2="12" strokeWidth="1.5"/>
+                </svg>
+              </div>
+              <p className="text-xs font-medium text-gray-900">Certificate</p>
+              <p className="text-xs text-gray-600">& Appraisal</p>
+            </div>
+          </div>
+
+          {/* Sapphire Info */}
+          <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+            <div className="flex items-center gap-2 text-gray-900">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2L3 7v6l7 5 7-5V7l-7-5z" stroke="currentColor" strokeWidth="1.5"/>
+              </svg>
+              <h3 className="font-medium">Your Sapphire info</h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-gray-600 uppercase mb-1">Carat</p>
+                <p className="text-2xl font-light">1</p>
+                <p className="text-xs text-gray-600 mt-1">Universal measurement unit for diamonds</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 uppercase mb-1">Color</p>
+                <p className="text-xl font-medium">Vivid Blue</p>
+                <p className="text-xs text-gray-600 mt-1">Completely colorless</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-600 uppercase mb-1">Dimensions (mm)</p>
+              <p className="text-2xl font-light">6x6</p>
+              <div className="flex items-center gap-2 mt-2">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                  <rect x="10" y="10" width="20" height="20" stroke="currentColor" strokeWidth="1"/>
+                </svg>
+                <p className="text-sm text-gray-600">Ratio: 1.00</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Know Your Setting */}
+          <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+            <div className="flex items-center gap-2 text-gray-900">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="6" stroke="currentColor" strokeWidth="1.5"/>
+              </svg>
+              <h3 className="font-medium">Know your setting</h3>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-600 uppercase mb-2">Metal</p>
+              <p className="text-xl font-medium mb-4">14k Yellow Gold</p>
+
+              {/* Metal Composition Chart */}
+              <div className="flex gap-1 h-8 rounded-full overflow-hidden mb-2">
+                <div className="bg-amber-500" style={{ width: '58.5%' }}></div>
+                <div className="bg-orange-700" style={{ width: '30.5%' }}></div>
+                <div className="bg-gray-300" style={{ width: '6.1%' }}></div>
+                <div className="bg-gray-400" style={{ width: '4.7%' }}></div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                  <span>58.5% Gold</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-orange-700"></div>
+                  <span>30.5% Copper</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+                  <span>6.1% Silver</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                  <span>4.7% Zinc</span>
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-600 mt-4 italic">
+                The secret sauce that makes this piece.
+              </p>
+            </div>
+          </div>
+
+          {/* Collapsible Sections */}
+          <div className="space-y-2">
+            {[
+              {
+                id: 'pendant',
+                icon: (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" strokeWidth="1.5" strokeLinejoin="round"/>
+                  </svg>
+                ),
+                title: 'Pendant Details'
+              },
+              {
+                id: 'shipping',
+                icon: (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="1" y="3" width="15" height="13" strokeWidth="1.5"/>
+                    <path d="M16 8h5l3 3v5h-4" strokeWidth="1.5"/>
+                    <circle cx="5.5" cy="18.5" r="2.5" strokeWidth="1.5"/>
+                    <circle cx="18.5" cy="18.5" r="2.5" strokeWidth="1.5"/>
+                  </svg>
+                ),
+                title: 'Shipping'
+              },
+              {
+                id: 'return',
+                icon: (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" strokeWidth="1.5"/>
+                    <polyline points="9 22 9 12 15 12 15 22" strokeWidth="1.5"/>
+                  </svg>
+                ),
+                title: 'Return Policy'
+              }
+            ].map((section) => (
+              <div key={section.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-gray-400 transition-all duration-300">
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="transition-transform group-hover:scale-110">
+                      {section.icon}
+                    </div>
+                    <span className="font-medium">{section.title}</span>
+                  </div>
+                  <ChevronDown
+                    className={`w-5 h-5 transition-transform duration-300 ${
+                      expandedSection === section.id ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                <div
+                  className={`overflow-hidden transition-all duration-300 ${
+                    expandedSection === section.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                  <div className="p-4 pt-0 text-sm text-gray-600 border-t border-gray-100">
+                    <p>
+                      This is where the {section.title.toLowerCase()} content would go.
+                      You can add detailed information about the product, shipping policies,
+                      or return policies here.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Virtual Appointment */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <h3 className="font-medium text-lg mb-2">Virtual Appointment</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              See Keyzar's jewelry up close with a personal appointment. Explore engagement rings,
+              diamonds, and fine jewelry in person through your device.
+            </p>
+            <button className="text-sm font-medium underline hover:text-gray-900">
+              Book Appointment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

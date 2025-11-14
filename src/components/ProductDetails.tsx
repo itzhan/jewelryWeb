@@ -1,0 +1,429 @@
+'use client';
+
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import {
+  Heart,
+  Plane,
+  Shield,
+  RotateCcw,
+  Award,
+  Gem,
+  Package,
+  Info,
+  ChevronDown,
+  MessageCircle,
+  Plus,
+  Lock,
+} from 'lucide-react';
+
+const knowSettingStats = [
+  { label: 'Gold', value: '58.5%', color: 'bg-amber-400' },
+  { label: 'Silver', value: '6.1%', color: 'bg-gray-400' },
+  { label: 'Copper', value: '30.5%', color: 'bg-orange-500' },
+  { label: 'Zinc', value: '4.7%', color: 'bg-gray-300' },
+];
+
+const pendantDetails = [
+  { label: 'SKU', value: '243Q-DP-R-YG-14' },
+  { label: 'Center Stone Shape', value: 'Round' },
+  { label: 'Material', value: '14k Yellow Gold' },
+  { label: 'Chain Length', value: '18 in adjustable' },
+];
+
+const accordionOrder = ['pendant', 'shipping', 'returns'] as const;
+type AccordionSection = (typeof accordionOrder)[number];
+
+const accordionContent: Record<
+  AccordionSection,
+  { title: string; icon: JSX.Element; body: JSX.Element }
+> = {
+  pendant: {
+    title: 'Pendant Details',
+    icon: <Gem className="w-4 h-4 text-gray-600" />,
+    body: (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
+        {pendantDetails.map((item) => (
+          <div key={item.label}>
+            <div className="text-xs uppercase tracking-wide text-gray-400">{item.label}</div>
+            <div className="font-medium text-gray-900">{item.value}</div>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+  shipping: {
+    title: 'Shipping',
+    icon: <Package className="w-4 h-4 text-gray-600" />,
+    body: (
+      <p className="text-sm text-gray-600 leading-relaxed">
+        This item is made to order and takes 3–4 weeks to craft. We ship FedEx Priority Overnight
+        with signature required and full insurance for every pendant that leaves our studio.
+      </p>
+    ),
+  },
+  returns: {
+    title: 'Return Policy',
+    icon: <RotateCcw className="w-4 h-4 text-gray-600" />,
+    body: (
+      <p className="text-sm text-gray-600 leading-relaxed">
+        Received an item you don’t love? KEYZAR is proud to offer free returns within{' '}
+        <strong>30 days</strong> from receiving your item. Contact our support team to issue a
+        return label and we’ll take care of the rest.
+      </p>
+    ),
+  },
+};
+
+export default function ProductDetails() {
+  const [selectedShape, setSelectedShape] = useState('Round');
+  const [selectedMetal, setSelectedMetal] = useState('Yellow Gold');
+  const [showMoreShapes, setShowMoreShapes] = useState(false);
+  const [showMoreMetals, setShowMoreMetals] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<AccordionSection, boolean>>({
+    pendant: true,
+    shipping: false,
+    returns: false,
+  });
+
+  const primaryShapes = [
+    {
+      name: 'Round',
+      svg: (
+        <svg viewBox="0 0 40 40" className="w-8 h-8">
+          <circle cx="20" cy="20" r="12" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Oval',
+      svg: (
+        <svg viewBox="0 0 40 40" className="w-8 h-8">
+          <ellipse cx="20" cy="20" rx="8" ry="12" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Pear',
+      svg: (
+        <svg viewBox="0 0 40 40" className="w-8 h-8">
+          <path d="M20 10 L28 20 Q28 28, 20 32 Q12 28, 12 20 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Heart',
+      svg: (
+        <svg viewBox="0 0 40 40" className="w-8 h-8">
+          <path d="M20 32 L12 24 Q8 20, 12 16 Q16 12, 20 16 Q24 12, 28 16 Q32 20, 28 24 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      ),
+    },
+  ];
+
+  const extraShapes = [
+    {
+      name: 'Emerald',
+      svg: (
+        <svg viewBox="0 0 40 40" className="w-8 h-8">
+          <rect x="12" y="8" width="16" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Marquise',
+      svg: (
+        <svg viewBox="0 0 40 40" className="w-8 h-8">
+          <path d="M20 6 Q32 20 20 34 Q8 20 20 6 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Princess',
+      svg: (
+        <svg viewBox="0 0 40 40" className="w-8 h-8">
+          <polygon points="12,8 28,8 32,20 28,32 12,32 8,20" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      ),
+    },
+  ];
+
+  const primaryMetals = [
+    { name: 'White Gold', label: '14K', color: 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300' },
+    { name: 'Yellow Gold', label: '14K', color: 'bg-gradient-to-br from-yellow-200 to-yellow-300 border-yellow-400' },
+    { name: 'Rose Gold', label: '10K', color: 'bg-gradient-to-br from-rose-200 to-rose-300 border-rose-400' },
+    { name: 'Rose Gold', label: '18K', color: 'bg-gradient-to-br from-rose-300 to-rose-400 border-rose-500' },
+  ];
+
+  const extraMetals = [
+    { name: 'Platinum', label: 'PT', color: 'bg-gradient-to-br from-gray-200 to-gray-300 border-gray-400' },
+    { name: 'White Gold', label: '18K', color: 'bg-gradient-to-br from-gray-100 to-white border-gray-200' },
+    { name: 'Yellow Gold', label: '18K', color: 'bg-gradient-to-br from-yellow-200 to-yellow-100 border-yellow-300' },
+  ];
+
+  const toggleSection = (section: AccordionSection) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  return (
+    <div className="flex flex-col">
+      <h1 className="text-4xl mb-2">The Amelia</h1>
+      <p className="text-4xl font-bold mb-4">$670</p>
+
+      <p className="text-gray-700 mb-6 leading-relaxed">
+        Stylish and modern, The Amelia has a bezel setting that showcases the fiery brilliance of your chosen
+        diamond. With its simple, yet striking design and matching cable chain necklace, this pendant is the
+        perfect accessory for a day at the office or night on the town.
+      </p>
+
+      {/* Center Stone Shape */}
+      <div className="mb-6">
+        <h3 className="font-semibold mb-3">
+          Center Stone Shape: <span className="font-normal">{selectedShape}</span>
+        </h3>
+        <div className="flex gap-2 flex-wrap">
+          {primaryShapes.map((shape) => (
+            <button
+              key={shape.name}
+              onClick={() => setSelectedShape(shape.name)}
+              className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
+                selectedShape === shape.name ? 'border-black bg-gray-50' : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <div className="mb-1">{shape.svg}</div>
+              <span className="text-xs">{shape.name}</span>
+            </button>
+          ))}
+          <button
+            className="flex items-center justify-center w-20 h-20 border-2 border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
+            onClick={() => setShowMoreShapes((prev) => !prev)}
+          >
+            <span className="text-2xl text-gray-400">{showMoreShapes ? '−' : '+'}</span>
+          </button>
+        </div>
+        {showMoreShapes && (
+          <div className="flex gap-2 flex-wrap mt-3">
+            {extraShapes.map((shape) => (
+              <button
+                key={shape.name}
+                onClick={() => setSelectedShape(shape.name)}
+                className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
+                  selectedShape === shape.name ? 'border-black bg-gray-50' : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="mb-1">{shape.svg}</div>
+                <span className="text-xs">{shape.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Material */}
+      <div className="mb-6">
+        <h3 className="font-semibold mb-3">
+          Material: <span className="font-normal">14k {selectedMetal}</span>
+        </h3>
+        <div className="flex gap-2 flex-wrap">
+          {primaryMetals.map((metal, index) => (
+            <button
+              key={`${metal.name}-${metal.label}-${index}`}
+              onClick={() => setSelectedMetal(metal.name)}
+              className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
+                selectedMetal === metal.name && metal.label === '14K'
+                  ? 'border-black bg-gray-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <div className="relative mb-1">
+                <div className={`w-8 h-8 rounded-full ${metal.color} border-2`}></div>
+                <div className="absolute -top-1 -right-1 bg-white text-[8px] px-1 rounded-full border text-gray-600">
+                  {metal.label}
+                </div>
+              </div>
+              <span className="text-xs text-center leading-tight">{metal.name}</span>
+            </button>
+            ))}
+          <button
+            className="flex items-center justify-center w-20 h-20 border-2 border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
+            onClick={() => setShowMoreMetals((prev) => !prev)}
+          >
+            <span className="text-2xl text-gray-400">{showMoreMetals ? '−' : '+'}</span>
+          </button>
+        </div>
+        {showMoreMetals && (
+          <div className="flex gap-2 flex-wrap mt-3">
+            {extraMetals.map((metal, index) => (
+              <button
+                key={`${metal.name}-${metal.label}-extra-${index}`}
+                onClick={() => setSelectedMetal(metal.name)}
+                className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
+                  selectedMetal === metal.name ? 'border-black bg-gray-50' : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="relative mb-1">
+                  <div className={`w-8 h-8 rounded-full ${metal.color} border-2`}></div>
+                  <div className="absolute -top-1 -right-1 bg-white text-[8px] px-1 rounded-full border text-gray-600">
+                    {metal.label}
+                  </div>
+                </div>
+                <span className="text-xs text-center leading-tight">{metal.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Price and Shipping */}
+      <div className="border-t pt-4 mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-lg font-semibold">Total Price</span>
+          <span className="text-3xl font-bold">$670</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+          </svg>
+          <span>Ships in 3-4 weeks</span>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="space-y-3 mb-6">
+        <button className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-900 transition-all duration-300 flex items-center justify-between px-8 group relative overflow-hidden shadow-lg hover:shadow-xl">
+          <Heart className="w-5 h-5 transition-all group-hover:scale-110 group-hover:fill-white" />
+          <span className="relative z-10 text-base">Add Center Stone</span>
+          <MessageCircle className="w-5 h-5 transition-all group-hover:scale-110" />
+        </button>
+        <button className="w-full border-2 border-black py-4 rounded-full transition-all duration-300 font-semibold hover:bg-black hover:text-white flex items-center justify-between px-8 group shadow-sm hover:shadow-md">
+          <div className="text-left">
+            <span className="block text-base">Buy Setting Only</span>
+            <span className="text-xs font-normal text-gray-600 group-hover:text-white/80">
+              *Center stone not included
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Lock className="w-4 h-4 transition-all group-hover:scale-110" />
+            <Plus className="w-5 h-5 transition-all group-hover:rotate-90 group-hover:scale-110" />
+          </div>
+        </button>
+        <div className="text-center text-sm">
+          Pay in 4 interest-free installments of $167.50{' '}
+          <a href="#" className="underline">
+            Learn more
+          </a>
+        </div>
+      </div>
+
+      {/* Add to wish list */}
+      <button className="flex items-center justify-center gap-2 mb-6 py-2 hover:opacity-70">
+        <Heart className="w-5 h-5" />
+        <span>Add to wish list</span>
+      </button>
+
+      {/* Features */}
+      <div className="grid grid-cols-4 gap-4 mb-8 text-center">
+        <div>
+          <Plane className="w-8 h-8 mx-auto mb-2" />
+          <div className="text-xs font-semibold">Overnight</div>
+          <div className="text-xs text-gray-600">Shipping</div>
+        </div>
+        <div>
+          <Shield className="w-8 h-8 mx-auto mb-2" />
+          <div className="text-xs font-semibold">Lifetime</div>
+          <div className="text-xs text-gray-600">Warranty</div>
+        </div>
+        <div>
+          <RotateCcw className="w-8 h-8 mx-auto mb-2" />
+          <div className="text-xs font-semibold">30 Days</div>
+          <div className="text-xs text-gray-600">Free Return</div>
+        </div>
+        <div>
+          <Award className="w-8 h-8 mx-auto mb-2" />
+          <div className="text-xs font-semibold">Certificate</div>
+          <div className="text-xs text-gray-600">& Appraisal</div>
+        </div>
+      </div>
+
+      {/* Know your setting */}
+      <div className="rounded-3xl border border-gray-200 bg-gray-50 p-6 space-y-6 shadow-sm mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-white shadow flex items-center justify-center">
+            <Info className="w-5 h-5 text-gray-500" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Know your setting</p>
+            <h3 className="text-xl font-semibold text-gray-900">14k Yellow Gold</h3>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-6">
+          <div className="relative w-32 h-32 mx-auto sm:mx-0">
+            <div
+              className="w-full h-full rounded-full"
+              style={{
+                background:
+                  'conic-gradient(#fbbf24 0% 58.5%, #ea580c 58.5% 89%, #fde68a 89% 95%, #d4d4d8 95% 100%)',
+              }}
+            />
+            <div className="absolute inset-4 bg-gray-50 rounded-full flex items-center justify-center text-gray-800 font-semibold">
+              14k
+            </div>
+          </div>
+          <div className="flex-1 space-y-2">
+            {knowSettingStats.map((stat) => (
+              <div key={stat.label} className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-gray-700">
+                  <span className={`w-3 h-3 rounded-full ${stat.color} ring-2 ring-white`} />
+                  {stat.label}
+                </div>
+                <span className="font-semibold text-gray-900">{stat.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-sm text-gray-600 italic">The secret sauce that makes this piece.</p>
+      </div>
+
+      {/* Accordion sections */}
+      <div className="space-y-4">
+        {accordionOrder.map((key) => {
+          const item = accordionContent[key];
+          const isOpen = openSections[key];
+
+          return (
+            <div key={key} className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+              <button
+                className="w-full flex items-center justify-between px-5 py-4 text-left"
+                onClick={() => toggleSection(key)}
+                aria-expanded={isOpen}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+                    {item.icon}
+                  </div>
+                  <span className="font-medium text-gray-900">{item.title}</span>
+                </div>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              <div
+                className={cn(
+                  "px-5 border-t border-gray-100 overflow-hidden transition-all duration-300",
+                  isOpen ? "max-h-[400px] opacity-100 py-4" : "max-h-0 opacity-0 py-0"
+                )}
+              >
+                <div className="pt-1 text-sm text-gray-700">{item.body}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
