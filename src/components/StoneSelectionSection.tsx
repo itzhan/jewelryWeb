@@ -360,11 +360,11 @@ export default function StoneSelectionSection() {
                     ))}
                   </div>
                   <span
-                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-900/70 transition-all duration-300 ease-out"
+                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-300/80 transition-all duration-300 ease-out"
                     style={{ left: colorHandleLines.start }}
                   />
                   <span
-                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-900/70 transition-all duration-300 ease-out"
+                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-300/80 transition-all duration-300 ease-out"
                     style={{ left: colorHandleLines.end }}
                   />
                 </div>
@@ -421,11 +421,11 @@ export default function StoneSelectionSection() {
                     ))}
                   </div>
                   <span
-                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-900/70 transition-all duration-300 ease-out"
+                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-300/80 transition-all duration-300 ease-out"
                     style={{ left: clarityHandleLines.start }}
                   />
                   <span
-                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-900/70 transition-all duration-300 ease-out"
+                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-300/80 transition-all duration-300 ease-out"
                     style={{ left: clarityHandleLines.end }}
                   />
                 </div>

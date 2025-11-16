@@ -1,12 +1,10 @@
 'use client';
 
-import type { CSSProperties, KeyboardEvent } from "react";
+import type { KeyboardEvent } from "react";
 import { Check, Gem } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type StepNumber = 1 | 2 | 3;
-type StepPosition = "first" | "middle" | "last";
-
 interface CustomizationStepsProps {
   activeStep: StepNumber;
   onStepChange?: (step: StepNumber) => void;
@@ -24,25 +22,14 @@ interface StepConfig {
   value: StepNumber;
   title: string;
   subtitle: string;
-  position: StepPosition;
   detail: StepDetail;
 }
-
-const ARROW_WIDTH = 42;
-const STEP_OVERLAP = ARROW_WIDTH - 12;
-
-const clipPaths: Record<StepPosition, string> = {
-  first: `polygon(0 0, calc(100% - ${ARROW_WIDTH}px) 0, 100% 50%, calc(100% - ${ARROW_WIDTH}px) 100%, 0 100%)`,
-  middle: `polygon(${ARROW_WIDTH}px 0, calc(100% - ${ARROW_WIDTH}px) 0, 100% 50%, calc(100% - ${ARROW_WIDTH}px) 100%, ${ARROW_WIDTH}px 100%, 0 50%)`,
-  last: `polygon(${ARROW_WIDTH}px 0, calc(100% - ${ARROW_WIDTH}px) 0, 100% 50%, calc(100% - ${ARROW_WIDTH}px) 100%, ${ARROW_WIDTH}px 100%, 0 50%)`,
-};
 
 const steps: StepConfig[] = [
   {
     value: 1,
     title: "SETTING",
     subtitle: "Select your",
-    position: "first",
     detail: {
       label: "The Amelia",
       actionLabel: "View",
@@ -53,7 +40,6 @@ const steps: StepConfig[] = [
     value: 2,
     title: "STONE",
     subtitle: "Select your",
-    position: "middle",
     detail: {
       label: "1Ct Princess Cut Lab Created Sapphire",
       actionLabel: "Change",
@@ -64,7 +50,6 @@ const steps: StepConfig[] = [
     value: 3,
     title: "PENDANT",
     subtitle: "Complete your",
-    position: "last",
     detail: {
       label: "Total Price",
       price: "$1,170",
@@ -103,7 +88,7 @@ export default function CustomizationSteps({
 
   const getCardClasses = (isActive: boolean, isCompleted: boolean) =>
     cn(
-      "relative h-full flex items-center gap-6 px-6 py-5 border overflow-hidden transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30 bg-white",
+      "relative h-full flex items-center gap-6 px-6 py-5 border overflow-hidden transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30 bg-white rounded-[999px]",
       isActive
         ? "border-2 border-black shadow-[0_12px_24px_rgba(15,23,42,0.15)]"
         : "border border-[#dcdcdc] bg-[#f7f7f7]",
@@ -173,29 +158,16 @@ export default function CustomizationSteps({
   return (
     <div className="steps-configuration-container w-full border border-[#e1e1e1] rounded-[40px] bg-[#f5f4f4] px-2 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]">
       <div className="overflow-x-auto">
-        <div className="flex min-w-[720px]">
+        <div className="flex min-w-[720px] gap-4">
           {steps.map((step) => {
             const isActive = activeStep === step.value;
             const isCompleted = step.value < activeStep;
-            const wrapperStyle: CSSProperties = {
-              marginLeft: step.position === "first" ? 0 : -STEP_OVERLAP,
-              zIndex: isActive ? 40 : steps.length - step.value,
-            };
-            const cardStyle: CSSProperties = {
-              clipPath: clipPaths[step.position],
-              borderRadius: 999,
-            };
 
             return (
-              <div
-                key={step.value}
-                className={getWrapperClasses()}
-                style={wrapperStyle}
-              >
+              <div key={step.value} className={getWrapperClasses()}>
                 <div
                   className={getCardClasses(isActive, isCompleted)}
                   {...interactiveProps(step.value)}
-                  style={cardStyle}
                 >
                   <div className="flex items-center gap-5 min-w-[170px]">
                     <span className="text-4xl font-light text-gray-900">{step.value}</span>

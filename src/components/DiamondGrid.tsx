@@ -185,11 +185,11 @@ export default function DiamondGrid({ stoneType, selectedShape, filters }: Diamo
 
                 <div className="max-h-0 overflow-hidden border-t border-transparent transition-[max-height,_padding-top] duration-300 group-hover:max-h-48 group-hover:border-gray-100/80 group-hover:pt-4">
                   <div className="flex gap-2">
-                    <button className="flex-1 rounded-full border border-gray-900/80 py-1.5 font-semibold text-gray-900 transition hover:bg-gray-100">
+                    <button className="flex-1 rounded-full border border-gray-900/80 py-1 text-xs font-semibold text-gray-900 transition hover:bg-gray-100">
                       More Info
                     </button>
-                    <button className="flex-1 rounded-full bg-gray-900 py-1.5 font-semibold text-white transition hover:bg-black">
-                      <span className="inline-flex items-center justify-center gap-1.5">
+                    <button className="flex-1 rounded-full bg-gray-900 py-1 text-xs font-semibold text-white transition hover:bg-black">
+                      <span className="inline-flex items-center justify-center gap-1">
                         Complete pendant
                         <svg
                           className="h-3 w-3"

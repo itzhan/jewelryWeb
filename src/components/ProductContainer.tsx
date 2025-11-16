@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, Heart, MessageCircle, Plus, Lock } from 'lucide-react';
+import { ChevronDown, Heart, Info, Lock, MessageCircle, Plus } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { accordionContent, accordionOrder, AccordionSection, knowSettingStats } from './ProductDetails';
 
 interface ProductImage {
   url: string;
@@ -11,7 +13,7 @@ interface ProductImage {
 }
 
 export default function ProductContainer() {
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [expandedSection, setExpandedSection] = useState<AccordionSection | null>(null);
 
   const images: ProductImage[] = [
     {
@@ -38,8 +40,8 @@ export default function ProductContainer() {
     },
   ];
 
-  const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section);
+  const toggleSection = (section: AccordionSection) => {
+    setExpandedSection((prev) => (prev === section ? null : section));
   };
 
   return (
@@ -244,118 +246,80 @@ export default function ProductContainer() {
           </div>
 
           {/* Know Your Setting */}
-          <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-            <div className="flex items-center gap-2 text-gray-900">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="10" r="6" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
-              <h3 className="font-medium">Know your setting</h3>
+          <div className="rounded-3xl border border-gray-200 bg-gray-50 p-6 space-y-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white shadow flex items-center justify-center">
+                <Info className="w-5 h-5 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gray-500">Know your setting</p>
+                <h3 className="text-xl font-semibold text-gray-900">14k Yellow Gold</h3>
+              </div>
             </div>
 
-            <div>
-              <p className="text-xs text-gray-600 uppercase mb-2">Metal</p>
-              <p className="text-xl font-medium mb-4">14k Yellow Gold</p>
-
-              {/* Metal Composition Chart */}
-              <div className="flex gap-1 h-8 rounded-full overflow-hidden mb-2">
-                <div className="bg-amber-500" style={{ width: '58.5%' }}></div>
-                <div className="bg-orange-700" style={{ width: '30.5%' }}></div>
-                <div className="bg-gray-300" style={{ width: '6.1%' }}></div>
-                <div className="bg-gray-400" style={{ width: '4.7%' }}></div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                  <span>58.5% Gold</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-orange-700"></div>
-                  <span>30.5% Copper</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-                  <span>6.1% Silver</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                  <span>4.7% Zinc</span>
+            <div className="flex flex-col sm:flex-row gap-6">
+              <div className="relative w-32 h-32 mx-auto sm:mx-0">
+                <div
+                  className="w-full h-full rounded-full"
+                  style={{
+                    background:
+                      'conic-gradient(#fbbf24 0% 58.5%, #ea580c 58.5% 89%, #fde68a 89% 95%, #d4d4d8 95% 100%)',
+                  }}
+                />
+                <div className="absolute inset-4 bg-gray-50 rounded-full flex items-center justify-center text-gray-800 font-semibold">
+                  14k
                 </div>
               </div>
-
-              <p className="text-sm text-gray-600 mt-4 italic">
-                The secret sauce that makes this piece.
-              </p>
+              <div className="flex-1 space-y-2">
+                {knowSettingStats.map((stat) => (
+                  <div key={stat.label} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <span className={`w-3 h-3 rounded-full ${stat.color} ring-2 ring-white`} />
+                      {stat.label}
+                    </div>
+                    <span className="font-semibold text-gray-900">{stat.value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
+            <p className="text-sm text-gray-600 italic">The secret sauce that makes this piece.</p>
           </div>
 
-          {/* Collapsible Sections */}
-          <div className="space-y-2">
-            {[
-              {
-                id: 'pendant',
-                icon: (
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" strokeWidth="1.5" strokeLinejoin="round"/>
-                  </svg>
-                ),
-                title: 'Pendant Details'
-              },
-              {
-                id: 'shipping',
-                icon: (
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <rect x="1" y="3" width="15" height="13" strokeWidth="1.5"/>
-                    <path d="M16 8h5l3 3v5h-4" strokeWidth="1.5"/>
-                    <circle cx="5.5" cy="18.5" r="2.5" strokeWidth="1.5"/>
-                    <circle cx="18.5" cy="18.5" r="2.5" strokeWidth="1.5"/>
-                  </svg>
-                ),
-                title: 'Shipping'
-              },
-              {
-                id: 'return',
-                icon: (
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" strokeWidth="1.5"/>
-                    <polyline points="9 22 9 12 15 12 15 22" strokeWidth="1.5"/>
-                  </svg>
-                ),
-                title: 'Return Policy'
-              }
-            ].map((section) => (
-              <div key={section.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-gray-400 transition-all duration-300">
-                <button
-                  onClick={() => toggleSection(section.id)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="transition-transform group-hover:scale-110">
-                      {section.icon}
+          {/* Accordion sections */}
+          <div className="space-y-4">
+            {accordionOrder.map((key) => {
+              const section = accordionContent[key];
+              const isOpen = expandedSection === key;
+
+              return (
+                <div key={key} className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between px-5 py-4 text-left"
+                    onClick={() => toggleSection(key)}
+                    aria-expanded={isOpen}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+                        {section.icon}
+                      </div>
+                      <span className="font-medium text-gray-900">{section.title}</span>
                     </div>
-                    <span className="font-medium">{section.title}</span>
-                  </div>
-                  <ChevronDown
-                    className={`w-5 h-5 transition-transform duration-300 ${
-                      expandedSection === section.id ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-                <div
-                  className={`overflow-hidden transition-all duration-300 ${
-                    expandedSection === section.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                  }`}
-                >
-                  <div className="p-4 pt-0 text-sm text-gray-600 border-t border-gray-100">
-                    <p>
-                      This is where the {section.title.toLowerCase()} content would go.
-                      You can add detailed information about the product, shipping policies,
-                      or return policies here.
-                    </p>
+                    <ChevronDown
+                      className={`w-5 h-5 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  <div
+                    className={cn(
+                      'px-5 border-t border-gray-100 overflow-hidden transition-all duration-300',
+                      isOpen ? 'max-h-[400px] opacity-100 py-4' : 'max-h-0 opacity-0 py-0'
+                    )}
+                  >
+                    <div className="pt-1 text-sm text-gray-700">{section.body}</div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Virtual Appointment */}

@@ -17,24 +17,24 @@ import {
   Lock,
 } from 'lucide-react';
 
-const knowSettingStats = [
+export const knowSettingStats = [
   { label: 'Gold', value: '58.5%', color: 'bg-amber-400' },
   { label: 'Silver', value: '6.1%', color: 'bg-gray-400' },
   { label: 'Copper', value: '30.5%', color: 'bg-orange-500' },
   { label: 'Zinc', value: '4.7%', color: 'bg-gray-300' },
 ];
 
-const pendantDetails = [
+export const pendantDetails = [
   { label: 'SKU', value: '243Q-DP-R-YG-14' },
   { label: 'Center Stone Shape', value: 'Round' },
   { label: 'Material', value: '14k Yellow Gold' },
   { label: 'Chain Length', value: '18 in adjustable' },
 ];
 
-const accordionOrder = ['pendant', 'shipping', 'returns'] as const;
-type AccordionSection = (typeof accordionOrder)[number];
+export const accordionOrder = ['pendant', 'shipping', 'returns'] as const;
+export type AccordionSection = (typeof accordionOrder)[number];
 
-const accordionContent: Record<
+export const accordionContent: Record<
   AccordionSection,
   { title: string; icon: JSX.Element; body: JSX.Element }
 > = {
