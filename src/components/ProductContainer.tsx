@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, Heart, Info, Lock, MessageCircle, Plus } from 'lucide-react';
+import { ChevronDown, Diamond, Heart, Info, Lock, MessageCircle, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { accordionContent, accordionOrder, AccordionSection, knowSettingStats } from './ProductDetails';
 
@@ -211,41 +211,49 @@ export default function ProductContainer() {
             </div>
           </div>
 
-          {/* Sapphire Info */}
-          <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-            <div className="flex items-center gap-2 text-gray-900">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M10 2L3 7v6l7 5 7-5V7l-7-5z" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
-              <h3 className="font-medium">Your Sapphire info</h3>
+          {/* Know Your Setting */}
+          <div className="rounded-3xl border border-gray-200 bg-[#f6f6f6] p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-gray-600">
+                <Diamond className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Your Sapphire info</h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-600 uppercase mb-1">Carat</p>
-                <p className="text-2xl font-light">1</p>
-                <p className="text-xs text-gray-600 mt-1">Universal measurement unit for diamonds</p>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 space-y-2 shadow-sm">
+                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
+                  <span className="text-amber-500">carat</span>
+                </div>
+                <p className="text-3xl font-semibold text-gray-900">1</p>
+                <p className="text-xs text-gray-500">
+                  Universal measurement unit for diamonds
+                </p>
               </div>
-              <div>
-                <p className="text-xs text-gray-600 uppercase mb-1">Color</p>
-                <p className="text-xl font-medium">Vivid Blue</p>
-                <p className="text-xs text-gray-600 mt-1">Completely colorless</p>
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 space-y-2 shadow-sm">
+                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
+                  <span className="text-pink-500">color</span>
+                </div>
+                <p className="text-2xl font-semibold text-gray-900">Vivid Blue</p>
+                <p className="text-xs text-gray-500">Completely colorless</p>
               </div>
-            </div>
-
-            <div>
-              <p className="text-xs text-gray-600 uppercase mb-1">Dimensions (mm)</p>
-              <p className="text-2xl font-light">6x6</p>
-              <div className="flex items-center gap-2 mt-2">
-                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                  <rect x="10" y="10" width="20" height="20" stroke="currentColor" strokeWidth="1"/>
-                </svg>
-                <p className="text-sm text-gray-600">Ratio: 1.00</p>
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 space-y-2 shadow-sm">
+                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
+                  <span className="text-cyan-500">dimensions (mm)</span>
+                </div>
+                <p className="text-3xl font-semibold text-gray-900">6x6</p>
+                <div className="flex items-center gap-2 text-gray-500">
+                  <svg className="h-5 w-5" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.2">
+                    <rect x="8" y="12" width="24" height="16" rx="4" />
+                    <path d="M8 28l7-6 7 6" />
+                    <line x1="8" y1="28" x2="16" y2="28" />
+                  </svg>
+                  <span className="text-xs font-medium">Ratio: 1.00</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Know Your Setting */}
           <div className="rounded-3xl border border-gray-200 bg-gray-50 p-6 space-y-6 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white shadow flex items-center justify-center">
