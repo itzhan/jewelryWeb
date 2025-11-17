@@ -209,7 +209,7 @@ export default function StoneSelectionSection({
   onMoreInfo,
   onAddPendant,
 }: StoneSelectionSectionProps) {
-  const stoneType: "labGrown" = "labGrown";
+  const stoneType = "labGrown" as const;
   const [selectedShape, setSelectedShape] = useState("Heart");
   const [filters, setFilters] = useState<StoneFilters>(() => createDefaultFilters());
   const [rangeSelections, setRangeSelections] = useState(() => ({

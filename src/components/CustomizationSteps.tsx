@@ -75,12 +75,14 @@ export default function CustomizationSteps({
       }
     };
 
+    const ariaCurrent: "step" | undefined = activeStep === step ? "step" : undefined;
+
     return {
       role: "button" as const,
       tabIndex: 0,
       onClick: () => onStepChange(step),
       onKeyDown: handleKeyDown,
-      "aria-current": activeStep === step ? "step" : undefined,
+      "aria-current": ariaCurrent,
     };
   };
 
