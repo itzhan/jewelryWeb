@@ -46,7 +46,7 @@ export default function ProductContainer() {
 
   return (
     <div className="step-three-view grid grid-cols-1 gap-0 custom-product-container mx-auto md:py-10 md:px-5">
-      <div className="grid md:grid-cols-2 gap-8 max-w-7xl mx-auto w-full px-4">
+      <div className="grid md:grid-cols-[1.6fr,1fr] gap-8 max-w-7xl mx-auto w-full px-4">
         {/* Image Gallery Section */}
         <div className="relative lg:sticky lg:top-10 self-start space-y-4 pb-16">
           <div className="grid grid-cols-2 gap-4 rounded-[36px]">

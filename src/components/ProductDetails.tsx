@@ -75,7 +75,28 @@ export const accordionContent: Record<
   },
 };
 
-export default function ProductDetails() {
+const stepOneStats = [
+  { label: 'Carat', value: '0.5' },
+  { label: 'Color', value: '1' },
+  { label: 'Clarity', value: 'VS1' },
+  { label: 'Cut', value: 'Excellent' },
+  { label: 'Ratio', value: '1.0' },
+  { label: 'L/W (mm)', value: '5.04/5.02' },
+];
+
+interface ProductDetailsProps {
+  isStepOneVariant?: boolean;
+  onPrimaryAction?: () => void;
+  primaryActionLabel?: string;
+  showBuySettingButton?: boolean;
+}
+
+export default function ProductDetails({
+  isStepOneVariant = false,
+  onPrimaryAction,
+  primaryActionLabel,
+  showBuySettingButton = true,
+}: ProductDetailsProps) {
   const [selectedShape, setSelectedShape] = useState('Round');
   const [selectedMetal, setSelectedMetal] = useState('Yellow Gold');
   const [showMoreShapes, setShowMoreShapes] = useState(false);
@@ -85,6 +106,8 @@ export default function ProductDetails() {
     shipping: false,
     returns: false,
   });
+  const statsRows = [stepOneStats.slice(0, 3), stepOneStats.slice(3)];
+  const primaryLabel = primaryActionLabel ?? 'Add Center Stone';
 
   const primaryShapes = [
     {
@@ -171,146 +194,193 @@ export default function ProductDetails() {
   return (
     <div className="flex flex-col">
       <h1 className="text-4xl mb-2">The Amelia</h1>
-      <p className="text-4xl font-bold mb-4">$670</p>
-
-      <p className="text-gray-700 mb-6 leading-relaxed">
-        Stylish and modern, The Amelia has a bezel setting that showcases the fiery brilliance of your chosen
-        diamond. With its simple, yet striking design and matching cable chain necklace, this pendant is the
-        perfect accessory for a day at the office or night on the town.
-      </p>
-
-      {/* Center Stone Shape */}
-      <div className="mb-6">
-        <h3 className="font-semibold mb-3">
-          Center Stone Shape: <span className="font-normal">{selectedShape}</span>
-        </h3>
-        <div className="flex gap-2 flex-wrap">
-          {primaryShapes.map((shape) => (
-            <button
-              key={shape.name}
-              onClick={() => setSelectedShape(shape.name)}
-              className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
-                selectedShape === shape.name ? 'border-black bg-gray-50' : 'border-gray-300 hover:border-gray-400'
-              }`}
+      {isStepOneVariant ? (
+        <div className="rounded-[32px] border border-gray-200 overflow-hidden mb-6">
+          {statsRows.map((row, rowIndex) => (
+            <div
+              key={`row-${rowIndex}`}
+              className={cn(
+                'grid grid-cols-3 text-center bg-white',
+                rowIndex < statsRows.length - 1 && 'border-b border-gray-200'
+              )}
             >
-              <div className="mb-1">{shape.svg}</div>
-              <span className="text-xs">{shape.name}</span>
-            </button>
+              {row.map((stat, statIndex) => (
+                <div
+                  key={stat.label}
+                  className={cn(
+                    'px-6 py-5',
+                    statIndex !== 0 && 'border-l border-gray-200'
+                  )}
+                >
+                  <p className="text-xl font-normal text-gray-900 tracking-[0.08em] leading-tight font-[Playfair_Display]">
+                    {stat.value}
+                  </p>
+                  <p className="text-[0.6rem] uppercase tracking-[0.65em] text-gray-500 mt-1">
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
+            </div>
           ))}
-          <button
-            className="flex items-center justify-center w-20 h-20 border-2 border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
-            onClick={() => setShowMoreShapes((prev) => !prev)}
-          >
-            <span className="text-2xl text-gray-400">{showMoreShapes ? '−' : '+'}</span>
-          </button>
         </div>
-        {showMoreShapes && (
-          <div className="flex gap-2 flex-wrap mt-3">
-            {extraShapes.map((shape) => (
-              <button
-                key={shape.name}
-                onClick={() => setSelectedShape(shape.name)}
-                className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
-                  selectedShape === shape.name ? 'border-black bg-gray-50' : 'border-gray-300 hover:border-gray-400'
-                }`}
-              >
-                <div className="mb-1">{shape.svg}</div>
-                <span className="text-xs">{shape.name}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      ) : (
+        <>
+          <p className="text-4xl font-bold mb-4">$670</p>
 
-      {/* Material */}
-      <div className="mb-6">
-        <h3 className="font-semibold mb-3">
-          Material: <span className="font-normal">14k {selectedMetal}</span>
-        </h3>
-        <div className="flex gap-2 flex-wrap">
-          {primaryMetals.map((metal, index) => (
-            <button
-              key={`${metal.name}-${metal.label}-${index}`}
-              onClick={() => setSelectedMetal(metal.name)}
-              className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
-                selectedMetal === metal.name && metal.label === '14K'
-                  ? 'border-black bg-gray-50'
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-            >
-              <div className="relative mb-1">
-                <div className={`w-8 h-8 rounded-full ${metal.color} border-2`}></div>
-                <div className="absolute -top-1 -right-1 bg-white text-[8px] px-1 rounded-full border text-gray-600">
-                  {metal.label}
-                </div>
+          <p className="text-gray-700 mb-6 leading-relaxed">
+            Stylish and modern, The Amelia has a bezel setting that showcases the fiery brilliance of your chosen
+            diamond. With its simple, yet striking design and matching cable chain necklace, this pendant is the
+            perfect accessory for a day at the office or night on the town.
+          </p>
+        </>
+      )}
+
+      {!isStepOneVariant && (
+        <>
+          {/* Center Stone Shape */}
+          <div className="mb-6">
+            <h3 className="font-semibold mb-3">
+              Center Stone Shape: <span className="font-normal">{selectedShape}</span>
+            </h3>
+            <div className="flex gap-2 flex-wrap">
+              {primaryShapes.map((shape) => (
+                <button
+                  key={shape.name}
+                  onClick={() => setSelectedShape(shape.name)}
+                  className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
+                    selectedShape === shape.name ? 'border-black bg-gray-50' : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="mb-1">{shape.svg}</div>
+                  <span className="text-xs">{shape.name}</span>
+                </button>
+              ))}
+              <button
+                className="flex items-center justify-center w-20 h-20 border-2 border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
+                onClick={() => setShowMoreShapes((prev) => !prev)}
+              >
+                <span className="text-2xl text-gray-400">{showMoreShapes ? '−' : '+'}</span>
+              </button>
+            </div>
+            {showMoreShapes && (
+              <div className="flex gap-2 flex-wrap mt-3">
+                {extraShapes.map((shape) => (
+                  <button
+                    key={shape.name}
+                    onClick={() => setSelectedShape(shape.name)}
+                    className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
+                      selectedShape === shape.name ? 'border-black bg-gray-50' : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="mb-1">{shape.svg}</div>
+                    <span className="text-xs">{shape.name}</span>
+                  </button>
+                ))}
               </div>
-              <span className="text-xs text-center leading-tight">{metal.name}</span>
-            </button>
-            ))}
-          <button
-            className="flex items-center justify-center w-20 h-20 border-2 border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
-            onClick={() => setShowMoreMetals((prev) => !prev)}
-          >
-            <span className="text-2xl text-gray-400">{showMoreMetals ? '−' : '+'}</span>
-          </button>
-        </div>
-        {showMoreMetals && (
-          <div className="flex gap-2 flex-wrap mt-3">
-            {extraMetals.map((metal, index) => (
-              <button
-                key={`${metal.name}-${metal.label}-extra-${index}`}
-                onClick={() => setSelectedMetal(metal.name)}
-                className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
-                  selectedMetal === metal.name ? 'border-black bg-gray-50' : 'border-gray-300 hover:border-gray-400'
-                }`}
-              >
-                <div className="relative mb-1">
-                  <div className={`w-8 h-8 rounded-full ${metal.color} border-2`}></div>
-                  <div className="absolute -top-1 -right-1 bg-white text-[8px] px-1 rounded-full border text-gray-600">
-                    {metal.label}
-                  </div>
-                </div>
-                <span className="text-xs text-center leading-tight">{metal.name}</span>
-              </button>
-            ))}
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Price and Shipping */}
-      <div className="border-t pt-4 mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-lg font-semibold">Total Price</span>
-          <span className="text-3xl font-bold">$670</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 6v6l4 2" />
-          </svg>
-          <span>Ships in 3-4 weeks</span>
-        </div>
-      </div>
+          {/* Material */}
+          <div className="mb-6">
+            <h3 className="font-semibold mb-3">
+              Material: <span className="font-normal">14k {selectedMetal}</span>
+            </h3>
+            <div className="flex gap-2 flex-wrap">
+              {primaryMetals.map((metal, index) => (
+                <button
+                  key={`${metal.name}-${metal.label}-${index}`}
+                  onClick={() => setSelectedMetal(metal.name)}
+                  className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
+                    selectedMetal === metal.name && metal.label === '14K'
+                      ? 'border-black bg-gray-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="relative mb-1">
+                    <div className={`w-8 h-8 rounded-full ${metal.color} border-2`}></div>
+                    <div className="absolute -top-1 -right-1 bg-white text-[8px] px-1 rounded-full border text-gray-600">
+                      {metal.label}
+                    </div>
+                  </div>
+                  <span className="text-xs text-center leading-tight">{metal.name}</span>
+                </button>
+                ))}
+              <button
+                className="flex items-center justify-center w-20 h-20 border-2 border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
+                onClick={() => setShowMoreMetals((prev) => !prev)}
+              >
+                <span className="text-2xl text-gray-400">{showMoreMetals ? '−' : '+'}</span>
+              </button>
+            </div>
+            {showMoreMetals && (
+              <div className="flex gap-2 flex-wrap mt-3">
+                {extraMetals.map((metal, index) => (
+                  <button
+                    key={`${metal.name}-${metal.label}-extra-${index}`}
+                    onClick={() => setSelectedMetal(metal.name)}
+                    className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
+                      selectedMetal === metal.name ? 'border-black bg-gray-50' : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="relative mb-1">
+                      <div className={`w-8 h-8 rounded-full ${metal.color} border-2`}></div>
+                      <div className="absolute -top-1 -right-1 bg-white text-[8px] px-1 rounded-full border text-gray-600">
+                        {metal.label}
+                      </div>
+                    </div>
+                    <span className="text-xs text-center leading-tight">{metal.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {!isStepOneVariant && (
+        <>
+          {/* Price and Shipping */}
+          <div className="border-t pt-4 mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-lg font-semibold">Total Price</span>
+              <span className="text-3xl font-bold">$670</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+              <span>Ships in 3-4 weeks</span>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Action Buttons */}
       <div className="space-y-3 mb-6">
-        <button className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-900 transition-all duration-300 flex items-center justify-between px-8 group relative overflow-hidden shadow-lg hover:shadow-xl">
+        <button
+          type="button"
+          onClick={onPrimaryAction}
+          className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-900 transition-all duration-300 flex items-center justify-between px-8 group relative overflow-hidden shadow-lg hover:shadow-xl"
+        >
           <Heart className="w-5 h-5 transition-all group-hover:scale-110 group-hover:fill-white" />
-          <span className="relative z-10 text-base">Add Center Stone</span>
+          <span className="relative z-10 text-base">{primaryLabel}</span>
           <MessageCircle className="w-5 h-5 transition-all group-hover:scale-110" />
         </button>
-        <button className="w-full border-2 border-black py-4 rounded-full transition-all duration-300 font-semibold hover:bg-black hover:text-white flex items-center justify-between px-8 group shadow-sm hover:shadow-md">
-          <div className="text-left">
-            <span className="block text-base">Buy Setting Only</span>
-            <span className="text-xs font-normal text-gray-600 group-hover:text-white/80">
-              *Center stone not included
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Lock className="w-4 h-4 transition-all group-hover:scale-110" />
-            <Plus className="w-5 h-5 transition-all group-hover:rotate-90 group-hover:scale-110" />
-          </div>
-        </button>
+        {showBuySettingButton && (
+          <button className="w-full border-2 border-black py-4 rounded-full transition-all duration-300 font-semibold hover:bg-black hover:text-white flex items-center justify-between px-8 group shadow-sm hover:shadow-md">
+            <div className="text-left">
+              <span className="block text-base">Buy Setting Only</span>
+              <span className="text-xs font-normal text-gray-600 group-hover:text-white/80">
+                *Center stone not included
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Lock className="w-4 h-4 transition-all group-hover:scale-110" />
+              <Plus className="w-5 h-5 transition-all group-hover:rotate-90 group-hover:scale-110" />
+            </div>
+          </button>
+        )}
         <div className="text-center text-sm">
           Pay in 4 interest-free installments of $167.50{' '}
           <a href="#" className="underline">

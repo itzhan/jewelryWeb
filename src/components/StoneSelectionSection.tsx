@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import StoneTypeToggle from "@/components/StoneTypeToggle";
 import DiamondGrid from "@/components/DiamondGrid";
 import { Slider } from "@/components/ui/slider";
 import type { StoneFilters, StoneCutGrade } from "@/types/stone-filters";
+import type { StepOneProduct } from "./StepOneLanding";
 
 const clarityOptions = ["SI1", "VS2", "VS1", "VVS2", "VVS1", "IF", "FL"];
 const colorOptions = ["J", "I", "H", "G", "F", "E", "D"];
@@ -198,8 +198,18 @@ const SpinnerButtons = ({ onIncrease, onDecrease }: SpinnerProps) => (
   </div>
 );
 
-export default function StoneSelectionSection() {
-  const [stoneType, setStoneType] = useState<"natural" | "labGrown">("labGrown");
+interface StoneSelectionSectionProps {
+  selectedProduct: StepOneProduct | null;
+  onMoreInfo?: () => void;
+  onAddPendant?: () => void;
+}
+
+export default function StoneSelectionSection({
+  selectedProduct,
+  onMoreInfo,
+  onAddPendant,
+}: StoneSelectionSectionProps) {
+  const stoneType: "labGrown" = "labGrown";
   const [selectedShape, setSelectedShape] = useState("Heart");
   const [filters, setFilters] = useState<StoneFilters>(() => createDefaultFilters());
   const [rangeSelections, setRangeSelections] = useState(() => ({
@@ -284,7 +294,6 @@ export default function StoneSelectionSection() {
   };
 
   const handleReset = () => {
-    setStoneType("labGrown");
     setSelectedShape("Heart");
     setFilters(createDefaultFilters());
     setRangeSelections({
@@ -295,16 +304,17 @@ export default function StoneSelectionSection() {
 
   return (
     <section className="step-two-view bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-12">
+      <div className="mx-auto max-w-7xl px-6 py-14">
         <div className="text-center">
           <p className="text-xl text-gray-500 md:text-2xl">
             Use the filters below to design your perfect engagement ring
           </p>
         </div>
-
-        <div className="mt-8">
-          <StoneTypeToggle stoneType={stoneType} setStoneType={setStoneType} />
-        </div>
+        {selectedProduct && (
+          <div className="mt-6 text-center text-sm text-gray-600">
+            当前正在为 <span className="font-medium text-gray-900">{selectedProduct.name}</span> 定制石头 · 价格 {selectedProduct.price}
+          </div>
+        )}
 
         <div className="mt-10">
           <div className="flex flex-wrap items-center justify-center gap-4 overflow-x-auto pb-2 text-center">
@@ -345,15 +355,15 @@ export default function StoneSelectionSection() {
           </button>
         </div>
 
-        <div className="mt-10 space-y-10">
-          <div className="grid gap-6 lg:grid-cols-12">
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-4">
-              <div className="flex items-center text-lg font-semibold text-gray-900">
+        <div className="mt-10 space-y-8">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center text-base font-semibold text-gray-900">
                 Color
                 <InfoDot />
               </div>
-              <div className="mt-4 overflow-hidden rounded-2xl border border-gray-200">
-                <div className="relative h-14">
+              <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200">
+                <div className="relative h-12">
                   <div className="absolute inset-0 grid grid-cols-7">
                     {colorGradientStops.map((stop, index) => (
                       <span key={`color-stop-${index}`} style={{ background: stop }} />
@@ -369,8 +379,8 @@ export default function StoneSelectionSection() {
                   />
                 </div>
               </div>
-              <div className="mt-5">
-                <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-[#f8f5ef] px-3 py-4">
+              <div className="mt-4">
+                <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-[#f8f5ef] px-2 py-3">
                   <div
                     className="absolute top-1/2 z-0 h-12 -translate-y-1/2 rounded-2xl border-2 border-black bg-white shadow-[0px_16px_40px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out"
                     style={buildHighlightStyle(rangeSelections.color, colorOptions.length, 4)}
@@ -384,7 +394,7 @@ export default function StoneSelectionSection() {
                           type="button"
                           aria-pressed={isActive}
                           onClick={() => handleBandSelection("color", index)}
-                          className="py-1.5 transition-colors"
+                          className="py-1 transition-colors"
                         >
                           <span
                             className={`inline-block px-1 ${
@@ -401,13 +411,13 @@ export default function StoneSelectionSection() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-4">
-              <div className="flex items-center text-lg font-semibold text-gray-900">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center text-base font-semibold text-gray-900">
                 Clarity
                 <InfoDot />
               </div>
-              <div className="mt-4 overflow-hidden rounded-2xl border border-gray-200">
-                <div className="relative h-14">
+              <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200">
+                <div className="relative h-12">
                   <div className="absolute inset-0 grid grid-cols-7 gap-2 px-2">
                     {claritySwatchDensities.map((density, index) => (
                       <span
@@ -430,8 +440,8 @@ export default function StoneSelectionSection() {
                   />
                 </div>
               </div>
-              <div className="mt-5">
-                <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-[#f8f5ef] px-3 py-4">
+              <div className="mt-4">
+                <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-[#f8f5ef] px-2 py-3">
                   <div
                     className="absolute top-1/2 z-0 h-12 -translate-y-1/2 rounded-2xl border-2 border-black bg-white shadow-[0px_16px_40px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out"
                     style={buildHighlightStyle(rangeSelections.clarity, clarityOptions.length, 4)}
@@ -445,7 +455,7 @@ export default function StoneSelectionSection() {
                           type="button"
                           aria-pressed={isActive}
                           onClick={() => handleBandSelection("clarity", index)}
-                          className="py-1.5 transition-colors"
+                          className="py-1 transition-colors"
                         >
                           <span
                             className={`inline-block px-1 ${
@@ -462,12 +472,12 @@ export default function StoneSelectionSection() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-4">
-              <div className="flex items-center text-lg font-semibold text-gray-900">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center text-base font-semibold text-gray-900">
                 Cut
                 <InfoDot />
               </div>
-              <div className="mt-4 flex overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
+              <div className="mt-3 flex overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
                 {cutOptions.map(({ label, value }, index) => {
                   const isActive = filters.cut === value;
                   return (
@@ -475,7 +485,7 @@ export default function StoneSelectionSection() {
                       key={value}
                       type="button"
                       onClick={() => handleCutChange(value)}
-                      className={`flex-1 px-4 py-3 text-sm font-semibold uppercase tracking-wide ${
+                      className={`flex-1 px-4 py-2 text-xs font-semibold uppercase tracking-widest ${
                         isActive ? "bg-white text-gray-900" : "text-gray-500 hover:text-gray-800"
                       } ${index !== 0 ? "border-l border-gray-200" : ""}`}
                     >
@@ -487,85 +497,85 @@ export default function StoneSelectionSection() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="text-lg font-semibold text-gray-900">Carat</div>
-              <div className="text-sm text-gray-400">2 ct — 11 ct</div>
-            </div>
-            <div className="mt-6">
-              <Slider
-                min={0.5}
-                max={11}
-                step={0.1}
-                value={[filters.carat.min, filters.carat.max]}
-                onValueChange={handleCaratChange}
-                className="h-2"
-              />
-            </div>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-400">Minimum</p>
-                  <p className="text-lg font-semibold text-gray-900">{filters.carat.min} ct</p>
-                </div>
-                <SpinnerButtons />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="text-lg font-semibold text-gray-900">Carat</span>
+                <span className="text-sm text-gray-400">2 ct — 11 ct</span>
               </div>
-              <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-400">Maximum</p>
-                  <p className="text-lg font-semibold text-gray-900">{filters.carat.max} ct</p>
-                </div>
-                <SpinnerButtons />
+              <div className="mt-4">
+                <Slider
+                  min={0.5}
+                  max={11}
+                  step={0.1}
+                  value={[filters.carat.min, filters.carat.max]}
+                  onValueChange={handleCaratChange}
+                  className="h-2"
+                />
               </div>
-            </div>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-12">
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-7">
-              <div className="text-lg font-semibold text-gray-900">Budget</div>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-gray-400">Minimum</p>
+                    <p className="text-lg font-semibold text-gray-900">{filters.carat.min} ct</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">$</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={filters.budget.min}
-                      onChange={(event) => handleBudgetInput("min", event.target.value)}
-                      className="w-28 bg-transparent text-right text-lg font-semibold text-gray-900 focus:outline-none"
-                    />
-                    <SpinnerButtons
-                      onIncrease={() => adjustBudget("min", BUDGET_STEP)}
-                      onDecrease={() => adjustBudget("min", -BUDGET_STEP)}
-                    />
-                  </div>
+                  <SpinnerButtons />
                 </div>
-                <div className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-gray-400">Maximum</p>
+                    <p className="text-lg font-semibold text-gray-900">{filters.carat.max} ct</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">$</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={filters.budget.max}
-                      onChange={(event) => handleBudgetInput("max", event.target.value)}
-                      className="w-32 bg-transparent text-right text-lg font-semibold text-gray-900 focus:outline-none"
-                    />
-                    <SpinnerButtons
-                      onIncrease={() => adjustBudget("max", BUDGET_STEP)}
-                      onDecrease={() => adjustBudget("max", -BUDGET_STEP)}
-                    />
-                  </div>
+                  <SpinnerButtons />
                 </div>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-5">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="text-lg font-semibold text-gray-900">Budget</div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">Minimum</p>
+                    <div className="mt-1 flex items-baseline gap-0">
+                      <span className="text-sm text-gray-400">$</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={filters.budget.min}
+                        onChange={(event) => handleBudgetInput("min", event.target.value)}
+                        className="w-24 bg-transparent text-right text-lg font-semibold text-gray-900 focus:outline-none pl-0 leading-none"
+                      />
+                    </div>
+                  </div>
+                  <SpinnerButtons
+                    onIncrease={() => adjustBudget("min", BUDGET_STEP)}
+                    onDecrease={() => adjustBudget("min", -BUDGET_STEP)}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">Maximum</p>
+                    <div className="mt-1 flex items-baseline gap-0">
+                      <span className="text-sm text-gray-400">$</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={filters.budget.max}
+                        onChange={(event) => handleBudgetInput("max", event.target.value)}
+                        className="w-24 bg-transparent text-right text-lg font-semibold text-gray-900 focus:outline-none pl-0 leading-none"
+                      />
+                    </div>
+                  </div>
+                  <SpinnerButtons
+                    onIncrease={() => adjustBudget("max", BUDGET_STEP)}
+                    onDecrease={() => adjustBudget("max", -BUDGET_STEP)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="text-lg font-semibold text-gray-900">Certificate</div>
               <div className="mt-4 flex gap-3">
                 {certificateOptions.map((certificate) => {
@@ -624,7 +634,13 @@ export default function StoneSelectionSection() {
         </div>
 
         <div className="mt-16">
-          <DiamondGrid stoneType={stoneType} selectedShape={selectedShape} filters={filters} />
+            <DiamondGrid
+              stoneType={stoneType}
+              selectedShape={selectedShape}
+              filters={filters}
+              onMoreInfo={onMoreInfo}
+              onAddPendant={onAddPendant}
+            />
         </div>
       </div>
     </section>

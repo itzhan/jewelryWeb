@@ -38,9 +38,21 @@ const galleryImages: GalleryImage[] = [
 const getAspectClass = (aspect?: GalleryImage['aspect']) =>
   aspect === 'portrait' ? 'aspect-[3/4]' : 'aspect-square';
 
-export default function ProductSection() {
+type ProductSectionProps = {
+  isStepOneDetails?: boolean;
+  onPrimaryAction?: () => void;
+  primaryActionLabel?: string;
+  showBuySettingButton?: boolean;
+};
+
+export default function ProductSection({
+  isStepOneDetails = false,
+  onPrimaryAction,
+  primaryActionLabel,
+  showBuySettingButton = true,
+}: ProductSectionProps) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+    <div className="grid grid-cols-1 lg:grid-cols-[1.6fr,1fr] gap-12 mb-12">
       {/* Product Images */}
       <div className="relative lg:sticky lg:top-10 self-start space-y-4 pb-16">
         <div className="grid grid-cols-2 gap-4 rounded-[36px]">
@@ -68,7 +80,12 @@ export default function ProductSection() {
       </div>
 
       {/* Product Details */}
-      <ProductDetails />
+      <ProductDetails
+        isStepOneVariant={isStepOneDetails}
+        onPrimaryAction={onPrimaryAction}
+        primaryActionLabel={primaryActionLabel}
+        showBuySettingButton={showBuySettingButton}
+      />
     </div>
   );
 }

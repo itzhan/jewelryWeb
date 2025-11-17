@@ -79,11 +79,11 @@ const products: StepOneProduct[] = [
 
 interface StepOneLandingProps {
   onMoreInfo: (product: StepOneProduct) => void;
-  onAddDiamond: (product: StepOneProduct) => void;
+  onCompleteRing: (product: StepOneProduct) => void;
 }
 
 const overlayButtonPrimary =
-  "px-5 py-2 text-xs font-semibold tracking-[0.10em] uppercase rounded-full border border-black bg-black text-white";
+  "px-5 py-2 text-[0.55rem] font-semibold tracking-[0.08em] uppercase rounded-full border border-black bg-black text-white";
 
 const overlayButtonSecondary =
   "px-5 py-2 text-xs font-semibold tracking-[0.10em] uppercase rounded-full border border-black bg-white text-black";
@@ -92,7 +92,7 @@ const priceToNumber = (price: string) => Number(price.replace(/[^0-9.]/g, ""));
 
 export default function StepOneLanding({
   onMoreInfo,
-  onAddDiamond,
+  onCompleteRing,
 }: StepOneLandingProps) {
   const sortedProducts = useMemo(() => [...products], []);
   const [selectedColors, setSelectedColors] = useState<
@@ -129,7 +129,7 @@ export default function StepOneLanding({
                 className="group relative cursor-pointer overflow-visible z-0 hover:z-30"
               >
                 {/* 主卡片本体 */}
-                <div className="relative rounded-2xl border border-gray-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.1)] transition-all duration-300 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_20px_45px_rgba(15,23,42,0.16)] group-hover:scale-[1.015] transform z-10">
+                <div className="relative rounded-2xl border border-gray-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.1)] transition-[border-radius,_transform,_box-shadow] duration-300 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_20px_45px_rgba(15,23,42,0.16)] group-hover:scale-[1.015] transform z-10 group-hover:rounded-bl-none group-hover:rounded-br-none">
                   <div className="relative">
                     <img
                       src={product.image}
@@ -194,8 +194,8 @@ export default function StepOneLanding({
                 <div
                   className="
                     absolute
-                    left-0
-                    right-0
+                    -left-[0.5px]
+                    -right-[0.5px]
                     top-full
                     -mt-2
                     bg-white
@@ -231,10 +231,10 @@ export default function StepOneLanding({
                           className={overlayButtonPrimary}
                           onClick={(event) => {
                             event.stopPropagation();
-                            onAddDiamond(product);
+                            onCompleteRing(product);
                           }}
                         >
-                          Add Diamond
+                          Complete your ring
                         </button>
                       </div>
                     </div>
@@ -261,3 +261,5 @@ export default function StepOneLanding({
     </div>
   );
 }
+
+export const pendantProducts = products;

@@ -7,6 +7,8 @@ interface DiamondGridProps {
   stoneType: "natural" | "labGrown"
   selectedShape: string
   filters: StoneFilters
+  onMoreInfo?: () => void
+  onAddPendant?: () => void
 }
 
 const sampleDiamonds = [
@@ -92,7 +94,18 @@ const sampleDiamonds = [
   },
 ]
 
-export default function DiamondGrid({ stoneType, selectedShape, filters }: DiamondGridProps) {
+const overlayButtonPrimary =
+  "flex-1 rounded-full bg-gray-900 py-1 text-xs font-semibold text-white transition hover:bg-black"
+const overlayButtonSecondary =
+  "flex-1 rounded-full border border-gray-900/80 py-1 text-xs font-semibold text-gray-900 transition hover:bg-gray-100"
+
+export default function DiamondGrid({
+  stoneType,
+  selectedShape,
+  filters,
+  onMoreInfo,
+  onAddPendant,
+}: DiamondGridProps) {
   const [favorites, setFavorites] = useState<number[]>([])
 
   const toggleFavorite = (id: number) => {
@@ -110,9 +123,9 @@ export default function DiamondGrid({ stoneType, selectedShape, filters }: Diamo
         return (
           <div
             key={diamond.id}
-            className="group relative flex cursor-pointer flex-col overflow-visible rounded-[1.75rem] border border-gray-100 bg-white/95 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_25px_60px_rgba(15,23,42,0.18)] hover:z-20"
+            className="group relative flex cursor-pointer flex-col overflow-visible rounded-[1.75rem] border border-gray-100 bg-white/95 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-[border-radius,_transform,_box-shadow] duration-300 hover:-translate-y-2 hover:shadow-[0_25px_60px_rgba(15,23,42,0.18)] hover:z-20 hover:rounded-bl-none hover:rounded-br-none"
           >
-            <div className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#e8f0fb] via-white to-[#dfe9ff] p-4">
+            <div className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#e8f0fb] via-white to-[#dfe9ff] p-4 group-hover:rounded-bl-none group-hover:rounded-br-none">
               <div className="absolute right-4 top-4 z-10">
                 <button
                   onClick={(event) => {
@@ -163,7 +176,7 @@ export default function DiamondGrid({ stoneType, selectedShape, filters }: Diamo
                 </p>
               </div>
 
-              <div className="relative mt-4">
+              <div className="mt-4">
                 <div className="grid grid-cols-4 gap-2 rounded-2xl border border-gray-100 bg-gray-50/60 px-3 py-3 text-center">
                   <div>
                     <p className="text-base font-semibold text-gray-900">{diamond.carat.toFixed(2)}</p>
@@ -182,15 +195,55 @@ export default function DiamondGrid({ stoneType, selectedShape, filters }: Diamo
                     <p className="text-xs uppercase tracking-wide text-gray-400">Ratio</p>
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <div className="max-h-0 overflow-hidden border-t border-transparent transition-[max-height,_padding-top] duration-300 group-hover:max-h-48 group-hover:border-gray-100/80 group-hover:pt-4">
+            <div
+              className="
+                absolute
+                left-0
+                right-0
+                top-full
+                -mt-4
+                bg-white
+                rounded-b-[1.75rem]
+                border
+                border-t-0
+                border-gray-200
+                shadow-[0_22px_50px_rgba(15,23,42,0.18)]
+                opacity-0
+                translate-y-2
+                pointer-events-none
+                transition-all
+                duration-300
+                group-hover:opacity-100
+                group-hover:translate-y-0
+                group-hover:pointer-events-auto
+                z-20
+              "
+            >
+              <div className="px-4 pb-4 pt-3">
                   <div className="flex gap-2">
-                    <button className="flex-1 rounded-full border border-gray-900/80 py-1 text-xs font-semibold text-gray-900 transition hover:bg-gray-100">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onMoreInfo?.()
+                      }}
+                      className={overlayButtonSecondary}
+                    >
                       More Info
                     </button>
-                    <button className="flex-1 rounded-full bg-gray-900 py-1 text-xs font-semibold text-white transition hover:bg-black">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onAddPendant?.()
+                      }}
+                      className={overlayButtonPrimary}
+                    >
                       <span className="inline-flex items-center justify-center gap-1">
-                        Complete pendant
+                        Add pendant
                         <svg
                           className="h-3 w-3"
                           viewBox="0 0 12 12"
@@ -204,17 +257,16 @@ export default function DiamondGrid({ stoneType, selectedShape, filters }: Diamo
                       </span>
                     </button>
                   </div>
-                  <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
-                    Pay in 12 interest-free installments of{" "}
-                    <span className="font-semibold text-gray-900">${installment}</span>{" "}
-                    <button
-                      type="button"
-                      className="underline underline-offset-2 transition hover:text-gray-900"
-                    >
-                      Learn more
-                    </button>
-                  </p>
-                </div>
+                <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
+                  Pay in 12 interest-free installments of{" "}
+                  <span className="font-semibold text-gray-900">${installment}</span>{" "}
+                  <button
+                    type="button"
+                    className="underline underline-offset-2 transition hover:text-gray-900"
+                  >
+                    Learn more
+                  </button>
+                </p>
               </div>
             </div>
           </div>
