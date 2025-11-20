@@ -10,7 +10,7 @@ export default function MainNav() {
 
   return (
     <nav className="border-b overflow-x-auto">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="page-width">
         <ul className="flex items-center justify-center gap-4 md:gap-8 py-4 whitespace-nowrap">
           {navItems.map((item) => (
             <li key={item}>

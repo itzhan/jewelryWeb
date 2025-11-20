@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 export default function OurCouples() {
   return (
     <div className="bg-black text-white py-16">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="page-width">
         <div className="flex items-center justify-between mb-12">
           <h2 className="text-4xl font-serif">OUR COUPLES</h2>
           <div className="flex gap-2">

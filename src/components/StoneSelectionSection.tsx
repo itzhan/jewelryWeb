@@ -1,29 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DiamondGrid from "@/components/DiamondGrid";
 import { Slider } from "@/components/ui/slider";
 import type { StoneFilters, StoneCutGrade } from "@/types/stone-filters";
 import type { StepOneProduct } from "./StepOneLanding";
+import {
+  fetchStoneFilters,
+  type StoneFiltersDto,
+  type BackendStoneItem,
+} from "@/lib/backend";
 
-const clarityOptions = ["SI1", "VS2", "VS1", "VVS2", "VVS1", "IF", "FL"];
-const colorOptions = ["J", "I", "H", "G", "F", "E", "D"];
-const certificateOptions = ["IGI", "GIA"];
-const cutOptions: Array<{ label: string; value: StoneCutGrade }> = [
+const defaultClarityOptions = ["SI1", "VS2", "VS1", "VVS2", "VVS1", "IF", "FL"];
+const defaultColorOptions = ["J", "I", "H", "G", "F", "E", "D"];
+const defaultCertificateOptions = ["IGI", "GIA"];
+const defaultCutOptions: Array<{ label: string; value: StoneCutGrade }> = [
   { label: "Good", value: "good" },
   { label: "Very Good", value: "veryGood" },
   { label: "Excellent", value: "excellent" },
 ];
 
-const claritySwatchDensities = [0.55, 0.45, 0.32, 0.26, 0.18, 0.12, 0.08];
-const colorGradientStops = ["#fff9df", "#fff4cd", "#ffecb7", "#ffe19f", "#fdd98c", "#f7cd75", "#f4c465"];
+const colorGradientStops = [
+  "#fff9df",
+  "#fff4cd",
+  "#ffecb7",
+  "#ffe19f",
+  "#fdd98c",
+  "#f7cd75",
+  "#f4c465",
+];
 const BUDGET_STEP = 250;
 
 const shapes = [
   {
     name: "Round",
     icon: (
-      <svg viewBox="0 0 56 56" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <svg
+        viewBox="0 0 56 56"
+        className="h-12 w-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
         <circle cx="28" cy="28" r="18" />
         <path d="M28 10v36M10 28h36" strokeLinecap="round" />
       </svg>
@@ -32,7 +50,13 @@ const shapes = [
   {
     name: "Emerald",
     icon: (
-      <svg viewBox="0 0 56 56" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <svg
+        viewBox="0 0 56 56"
+        className="h-12 w-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
         <path d="M18 10h20l8 8v20l-8 8H18l-8-8V18z" />
         <path d="M18 10l8 8h4l8-8" />
         <path d="M18 46l8-8h4l8 8" />
@@ -42,15 +66,31 @@ const shapes = [
   {
     name: "Heart",
     icon: (
-      <svg viewBox="0 0 56 56" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth={1.8}>
-        <path d="M28 44s-14-8.5-14-18a8 8 0 0114-5 8 8 0 0114 5c0 9.5-14 18-14 18z" strokeLinecap="round" strokeLinejoin="round" />
+      <svg
+        viewBox="0 0 56 56"
+        className="h-12 w-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
+        <path
+          d="M28 44s-14-8.5-14-18a8 8 0 0114-5 8 8 0 0114 5c0 9.5-14 18-14 18z"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     ),
   },
   {
     name: "Marquise",
     icon: (
-      <svg viewBox="0 0 56 56" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <svg
+        viewBox="0 0 56 56"
+        className="h-12 w-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
         <path d="M28 8c10 5 18 10 18 20s-8 15-18 20c-10-5-18-10-18-20S18 13 28 8z" />
       </svg>
     ),
@@ -58,7 +98,13 @@ const shapes = [
   {
     name: "Oval",
     icon: (
-      <svg viewBox="0 0 56 56" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <svg
+        viewBox="0 0 56 56"
+        className="h-12 w-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
         <ellipse cx="28" cy="28" rx="14" ry="18" />
         <path d="M14 28h28" strokeLinecap="round" />
       </svg>
@@ -67,15 +113,31 @@ const shapes = [
   {
     name: "Pear",
     icon: (
-      <svg viewBox="0 0 56 56" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth={1.8}>
-        <path d="M28 10C34 18 40 22 40 30a12 12 0 01-24 0c0-8 6-12 12-20z" strokeLinecap="round" strokeLinejoin="round" />
+      <svg
+        viewBox="0 0 56 56"
+        className="h-12 w-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
+        <path
+          d="M28 10C34 18 40 22 40 30a12 12 0 01-24 0c0-8 6-12 12-20z"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     ),
   },
   {
     name: "Princess",
     icon: (
-      <svg viewBox="0 0 56 56" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <svg
+        viewBox="0 0 56 56"
+        className="h-12 w-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
         <rect x="14" y="14" width="28" height="28" />
         <path d="M14 14l28 28M42 14L14 42" />
       </svg>
@@ -84,7 +146,13 @@ const shapes = [
   {
     name: "Radiant",
     icon: (
-      <svg viewBox="0 0 56 56" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <svg
+        viewBox="0 0 56 56"
+        className="h-12 w-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
         <path d="M16 12h24l8 8-2 16-12 12H22L10 36 8 20z" />
         <path d="M16 12l12 12 12-12" />
         <path d="M12 24h32" />
@@ -94,7 +162,13 @@ const shapes = [
   {
     name: "Cushion",
     icon: (
-      <svg viewBox="0 0 56 56" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <svg
+        viewBox="0 0 56 56"
+        className="h-12 w-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
         <path d="M18 10h20c6 0 8 2 8 8v20c0 6-2 8-8 8H18c-6 0-8-2-8-8V18c0-6 2-8 8-8z" />
         <path d="M18 10l20 36M38 10L18 46" />
       </svg>
@@ -103,7 +177,13 @@ const shapes = [
   {
     name: "E. Cushion",
     icon: (
-      <svg viewBox="0 0 56 56" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <svg
+        viewBox="0 0 56 56"
+        className="h-12 w-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
         <rect x="14" y="10" width="28" height="36" rx="6" />
         <rect x="20" y="16" width="16" height="24" rx="4" />
       </svg>
@@ -123,7 +203,7 @@ const createInitialRange = (length: number): RangeSelection => ({
   anchor: null,
 });
 
-type BandType = "color" | "clarity";
+type BandType = "color" | "clarity" | "cut";
 
 const isIndexWithinRange = (range: RangeSelection, index: number) => {
   const start = Math.min(range.start, range.end);
@@ -139,7 +219,11 @@ const getRangeMetrics = (range: RangeSelection, total: number) => {
   return { left, width };
 };
 
-const buildHighlightStyle = (range: RangeSelection, total: number, offsetPx = 0) => {
+const buildHighlightStyle = (
+  range: RangeSelection,
+  total: number,
+  offsetPx = 0
+) => {
   const { left, width } = getRangeMetrics(range, total);
   return {
     left: `calc(${left}% + ${offsetPx}px)`,
@@ -147,24 +231,29 @@ const buildHighlightStyle = (range: RangeSelection, total: number, offsetPx = 0)
   };
 };
 
-const buildHandleLines = (range: RangeSelection, total: number, offsetPx = 0) => {
-  const start = Math.min(range.start, range.end);
-  const end = Math.max(range.start, range.end) + 1;
-  const unit = 100 / total;
+const createDefaultFilters = (options?: {
+  clarityCodes?: string[];
+  colorCodes?: string[];
+  cutCodes?: string[];
+}): StoneFilters => {
+  const clarity = options?.clarityCodes ?? defaultClarityOptions;
+  const color = options?.colorCodes ?? defaultColorOptions;
+  const allCutsOrder: StoneCutGrade[] = ["good", "veryGood", "excellent"];
+  const availableCuts =
+    options?.cutCodes && options.cutCodes.length > 0
+      ? allCutsOrder.filter((code) => options.cutCodes?.includes(code))
+      : allCutsOrder;
+
   return {
-    start: `calc(${start * unit}% + ${offsetPx}px)`,
-    end: `calc(${end * unit}% - ${offsetPx}px)`,
+    clarity,
+    color,
+    cut: availableCuts,
+    // 更贴近当前 mock 数据的默认范围
+    carat: { min: 0.5, max: 2 },
+    budget: { min: 250, max: 5000 },
+    certificate: [],
   };
 };
-
-const createDefaultFilters = (): StoneFilters => ({
-  clarity: ["SI1", "VS2", "VS1", "VVS2", "VVS1", "IF", "FL"],
-  color: ["J", "I", "H", "G", "F", "E", "D"],
-  cut: "excellent",
-  carat: { min: 2, max: 11 },
-  budget: { min: 250, max: 11081260 },
-  certificate: [],
-});
 
 const InfoDot = () => (
   <span className="ml-2 inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 text-[10px] leading-none text-gray-500">
@@ -173,11 +262,28 @@ const InfoDot = () => (
 );
 
 const ArrowIcon = ({ direction }: { direction: "up" | "down" }) => (
-  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" className="text-gray-400">
+  <svg
+    width="10"
+    height="10"
+    viewBox="0 0 12 12"
+    fill="none"
+    stroke="currentColor"
+    className="text-gray-400"
+  >
     {direction === "up" ? (
-      <path d="M2 8l4-4 4 4" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M2 8l4-4 4 4"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     ) : (
-      <path d="M2 4l4 4 4-4" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M2 4l4 4 4-4"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     )}
   </svg>
 );
@@ -189,10 +295,20 @@ interface SpinnerProps {
 
 const SpinnerButtons = ({ onIncrease, onDecrease }: SpinnerProps) => (
   <div className="flex flex-col">
-    <button type="button" onClick={onIncrease} className="p-1" aria-label="Increase">
+    <button
+      type="button"
+      onClick={onIncrease}
+      className="p-1"
+      aria-label="Increase"
+    >
       <ArrowIcon direction="up" />
     </button>
-    <button type="button" onClick={onDecrease} className="p-1" aria-label="Decrease">
+    <button
+      type="button"
+      onClick={onDecrease}
+      className="p-1"
+      aria-label="Decrease"
+    >
       <ArrowIcon direction="down" />
     </button>
   </div>
@@ -200,8 +316,9 @@ const SpinnerButtons = ({ onIncrease, onDecrease }: SpinnerProps) => (
 
 interface StoneSelectionSectionProps {
   selectedProduct: StepOneProduct | null;
-  onMoreInfo?: () => void;
-  onAddPendant?: () => void;
+  onMoreInfo?: (stone: BackendStoneItem) => void;
+  // 点击「Add pendant」时，把当前石头对象回传给上层，便于步骤三展示真实配置
+  onAddPendant?: (stone: BackendStoneItem) => void;
 }
 
 export default function StoneSelectionSection({
@@ -210,19 +327,96 @@ export default function StoneSelectionSection({
   onAddPendant,
 }: StoneSelectionSectionProps) {
   const stoneType = "labGrown" as const;
-  const [selectedShape, setSelectedShape] = useState("Heart");
-  const [filters, setFilters] = useState<StoneFilters>(() => createDefaultFilters());
+  const [backendOptions, setBackendOptions] = useState<StoneFiltersDto | null>(
+    null
+  );
+  const [selectedShape, setSelectedShape] = useState<string>("Heart");
+  const [filters, setFilters] = useState<StoneFilters>(() =>
+    createDefaultFilters()
+  );
   const [rangeSelections, setRangeSelections] = useState(() => ({
-    color: createInitialRange(colorOptions.length),
-    clarity: createInitialRange(clarityOptions.length),
+    color: createInitialRange(defaultColorOptions.length),
+    clarity: createInitialRange(defaultClarityOptions.length),
+    cut: createInitialRange(defaultCutOptions.length),
   }));
-  const colorHandleLines = buildHandleLines(rangeSelections.color, colorOptions.length, 8);
-  const clarityHandleLines = buildHandleLines(rangeSelections.clarity, clarityOptions.length, 8);
+
+  const shapeIconSvgMap = useMemo(() => {
+    const map = new Map<string, string | undefined>();
+    backendOptions?.shapes.forEach((item) => {
+      if (item.iconSvg) {
+        map.set(item.label, item.iconSvg);
+      }
+    });
+    return map;
+  }, [backendOptions]);
+
+  useEffect(() => {
+    const loadFilters = async () => {
+      try {
+        const data = await fetchStoneFilters();
+        setBackendOptions(data);
+
+        const clarityCodes = data.clarities.map((c) => c.code);
+        const colorCodes = data.colors.map((c) => c.code);
+        const cutCodes = data.cuts.map((c) => c.code);
+
+        setFilters(
+          createDefaultFilters({ clarityCodes, colorCodes, cutCodes })
+        );
+        setRangeSelections({
+          color: createInitialRange(colorCodes.length),
+          clarity: createInitialRange(clarityCodes.length),
+          cut: createInitialRange(cutCodes.length),
+        });
+
+        // 选中一个后端实际存在的形状名称
+        if (data.shapes.length > 0) {
+          setSelectedShape(data.shapes[0].label);
+        }
+      } catch (e) {
+        console.error("加载石头筛选枚举失败", e);
+      }
+    };
+
+    loadFilters();
+  }, []);
+
+  const colorCodes = useMemo(
+    () => backendOptions?.colors.map((c) => c.code) ?? defaultColorOptions,
+    [backendOptions]
+  );
+  const clarityCodes = useMemo(
+    () => backendOptions?.clarities.map((c) => c.code) ?? defaultClarityOptions,
+    [backendOptions]
+  );
+  const cutCodes = useMemo(
+    () =>
+      backendOptions?.cuts.map((c) => c.code as StoneCutGrade) ??
+      defaultCutOptions.map((option) => option.value),
+    [backendOptions]
+  );
+  const certificateCodes = useMemo(
+    () =>
+      backendOptions?.certificates.map((c) => c.code) ??
+      defaultCertificateOptions,
+    [backendOptions]
+  );
+
+  const dynamicCutOptions: Array<{ label: string; value: StoneCutGrade }> =
+    useMemo(() => {
+      if (!backendOptions) return defaultCutOptions;
+      return backendOptions.cuts.map((c) => ({
+        label: c.label,
+        value: c.code as StoneCutGrade,
+      }));
+    }, [backendOptions]);
 
   const toggleCertificate = (value: string) => {
     setFilters((prev) => {
       const exists = prev.certificate.includes(value);
-      const nextValues = exists ? prev.certificate.filter((item) => item !== value) : [...prev.certificate, value];
+      const nextValues = exists
+        ? prev.certificate.filter((item) => item !== value)
+        : [...prev.certificate, value];
       return { ...prev, certificate: nextValues };
     });
   };
@@ -243,22 +437,32 @@ export default function StoneSelectionSection({
       }
 
       const updatedSelections = { ...prev, [type]: nextRange };
-      const activeOptions = type === "color" ? colorOptions : clarityOptions;
+      const activeOptions =
+        type === "color"
+          ? colorCodes
+          : type === "clarity"
+          ? clarityCodes
+          : cutCodes;
       const normalizedStart = Math.min(nextRange.start, nextRange.end);
       const normalizedEnd = Math.max(nextRange.start, nextRange.end);
-      const selectedValues = activeOptions.slice(normalizedStart, normalizedEnd + 1);
+      const selectedValues = activeOptions.slice(
+        normalizedStart,
+        normalizedEnd + 1
+      );
 
       setFilters((prevFilters) => ({ ...prevFilters, [type]: selectedValues }));
       return updatedSelections;
     });
   };
 
-  const handleCutChange = (value: StoneCutGrade) => {
-    setFilters((prev) => ({ ...prev, cut: value }));
-  };
-
   const handleCaratChange = (value: number[]) => {
-    setFilters((prev) => ({ ...prev, carat: { min: Number(value[0].toFixed(1)), max: Number(value[1].toFixed(1)) } }));
+    setFilters((prev) => ({
+      ...prev,
+      carat: {
+        min: Number(value[0].toFixed(1)),
+        max: Number(value[1].toFixed(1)),
+      },
+    }));
   };
 
   const updateBudgetField = (
@@ -294,17 +498,30 @@ export default function StoneSelectionSection({
   };
 
   const handleReset = () => {
-    setSelectedShape("Heart");
-    setFilters(createDefaultFilters());
+    if (backendOptions?.shapes?.length) {
+      setSelectedShape(backendOptions.shapes[0].label);
+    } else {
+      setSelectedShape("Heart");
+    }
+
+    const clarityCodes = backendOptions?.clarities.map((c) => c.code);
+    const colorCodes = backendOptions?.colors.map((c) => c.code);
+    const cutCodes = backendOptions?.cuts.map((c) => c.code as StoneCutGrade);
+    setFilters(createDefaultFilters({ clarityCodes, colorCodes, cutCodes }));
     setRangeSelections({
-      color: createInitialRange(colorOptions.length),
-      clarity: createInitialRange(clarityOptions.length),
+      color: createInitialRange(
+        colorCodes?.length ?? defaultColorOptions.length
+      ),
+      clarity: createInitialRange(
+        clarityCodes?.length ?? defaultClarityOptions.length
+      ),
+      cut: createInitialRange(cutCodes?.length ?? defaultCutOptions.length),
     });
   };
 
   return (
     <section className="step-two-view bg-white">
-      <div className="mx-auto max-w-7xl px-6 py-14">
+      <div className="mx-auto max-w-8xl px-4 py-14">
         <div className="text-center">
           <p className="text-xl text-gray-500 md:text-2xl">
             Use the filters below to design your perfect engagement ring
@@ -312,7 +529,11 @@ export default function StoneSelectionSection({
         </div>
         {selectedProduct && (
           <div className="mt-6 text-center text-sm text-gray-600">
-            当前正在为 <span className="font-medium text-gray-900">{selectedProduct.name}</span> 定制石头 · 价格 {selectedProduct.price}
+            当前正在为{" "}
+            <span className="font-medium text-gray-900">
+              {selectedProduct.name}
+            </span>{" "}
+            定制石头 · 价格 {selectedProduct.price}
           </div>
         )}
 
@@ -320,17 +541,31 @@ export default function StoneSelectionSection({
           <div className="flex flex-wrap items-center justify-center gap-4 overflow-x-auto pb-2 text-center">
             {shapes.map((shape) => {
               const isSelected = selectedShape === shape.name;
+              const iconSvg = shapeIconSvgMap.get(shape.name);
               return (
                 <button
                   key={shape.name}
                   type="button"
                   onClick={() => setSelectedShape(shape.name)}
                   className={`flex h-28 w-24 flex-col items-center justify-center rounded-2xl border-2 transition-all ${
-                    isSelected ? "border-black shadow-[0_12px_24px_rgba(0,0,0,0.12)]" : "border-gray-200 hover:border-gray-400"
+                    isSelected
+                      ? "border-black shadow-[0_12px_24px_rgba(0,0,0,0.12)]"
+                      : "border-gray-200 hover:border-gray-400"
                   }`}
                 >
-                  <span className="mb-2 text-gray-700">{shape.icon}</span>
-                  <span className="text-xs font-medium text-gray-600">{shape.name}</span>
+                  <span className="mb-2 text-gray-700">
+                    {iconSvg ? (
+                      <span
+                        className="inline-block h-12 w-12"
+                        dangerouslySetInnerHTML={{ __html: iconSvg }}
+                      />
+                    ) : (
+                      shape.icon
+                    )}
+                  </span>
+                  <span className="text-xs font-medium text-gray-600">
+                    {shape.name}
+                  </span>
                 </button>
               );
             })}
@@ -348,9 +583,25 @@ export default function StoneSelectionSection({
             className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900"
           >
             Reset
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor">
-              <path d="M4 4v4h4" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M4.93 4.93A8 8 0 0116 10a8 8 0 01-3.34 6.56" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+            >
+              <path
+                d="M4 4v4h4"
+                strokeWidth={1.4}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M4.93 4.93A8 8 0 0116 10a8 8 0 01-3.34 6.56"
+                strokeWidth={1.4}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         </div>
@@ -362,32 +613,51 @@ export default function StoneSelectionSection({
                 Color
                 <InfoDot />
               </div>
-              <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200">
-                <div className="relative h-12">
-                  <div className="absolute inset-0 grid grid-cols-7">
-                    {colorGradientStops.map((stop, index) => (
-                      <span key={`color-stop-${index}`} style={{ background: stop }} />
-                    ))}
+              <div className="mt-3">
+                <div
+                  className="relative mb-3 flex h-5 overflow-hidden rounded-md border border-gray-200 md:mt-4"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgb(255, 254, 235) 10%, rgb(255, 255, 255) 90%)",
+                  }}
+                >
+                  {colorCodes.map((_, index) => (
+                    <div
+                      key={`color-bar-segment-${index}`}
+                      className="relative h-full flex-1"
+                    >
+                      {index < colorCodes.length - 1 && (
+                        <span className="absolute right-0 top-0 bottom-0 w-px bg-gray-200" />
+                      )}
+                    </div>
+                  ))}
+                  <div
+                    className="pointer-events-none absolute top-0 bottom-0 rounded-lg bg-transparent transition-all duration-500"
+                    style={buildHighlightStyle(
+                      rangeSelections.color,
+                      colorCodes.length
+                    )}
+                  >
+                    <div className="absolute inset-0 border-l border-r border-black" />
                   </div>
-                  <span
-                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-300/80 transition-all duration-300 ease-out"
-                    style={{ left: colorHandleLines.start }}
-                  />
-                  <span
-                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-300/80 transition-all duration-300 ease-out"
-                    style={{ left: colorHandleLines.end }}
-                  />
                 </div>
               </div>
               <div className="mt-4">
                 <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-[#f8f5ef] px-2 py-3">
                   <div
                     className="absolute top-1/2 z-0 h-12 -translate-y-1/2 rounded-2xl border-2 border-black bg-white shadow-[0px_16px_40px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out"
-                    style={buildHighlightStyle(rangeSelections.color, colorOptions.length, 4)}
+                    style={buildHighlightStyle(
+                      rangeSelections.color,
+                      colorCodes.length,
+                      4
+                    )}
                   />
                   <div className="relative z-10 grid grid-cols-7 text-center text-xs font-semibold uppercase tracking-[0.12em]">
-                    {colorOptions.map((color, index) => {
-                      const isActive = isIndexWithinRange(rangeSelections.color, index);
+                    {colorCodes.map((color, index) => {
+                      const isActive = isIndexWithinRange(
+                        rangeSelections.color,
+                        index
+                      );
                       return (
                         <button
                           key={color}
@@ -416,39 +686,51 @@ export default function StoneSelectionSection({
                 Clarity
                 <InfoDot />
               </div>
-              <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200">
-                <div className="relative h-12">
-                  <div className="absolute inset-0 grid grid-cols-7 gap-2 px-2">
-                    {claritySwatchDensities.map((density, index) => (
-                      <span
-                        key={`clarity-swatch-${index}`}
-                        className="rounded-2xl border border-gray-200"
-                        style={{
-                          backgroundImage: `radial-gradient(circle at 6px 6px, rgba(0,0,0,${density}) 15%, transparent 35%)`,
-                          backgroundSize: "20px 20px",
-                        }}
-                      />
-                    ))}
+              <div className="mt-3">
+                <div
+                  className="relative mb-3 flex h-5 overflow-hidden rounded-md border border-gray-200 md:mt-4"
+                  style={{
+                    background:
+                      'url("https://cdn.shopify.com/s/files/1/0039/6994/1568/files/clarity-filter-hint.png?v=1743157435") center center / cover no-repeat',
+                  }}
+                >
+                  {clarityCodes.map((_, index) => (
+                    <div
+                      key={`clarity-bar-segment-${index}`}
+                      className="relative z-10 flex-1 h-full bg-transparent px-2 text-center uppercase transition-colors"
+                    >
+                      {index < clarityCodes.length - 1 && (
+                        <span className="absolute right-0 top-0 bottom-0 w-px bg-gray-200" />
+                      )}
+                    </div>
+                  ))}
+                  <div
+                    className="pointer-events-none absolute top-0 bottom-0 rounded-lg bg-transparent transition-all duration-500"
+                    style={buildHighlightStyle(
+                      rangeSelections.clarity,
+                      clarityCodes.length
+                    )}
+                  >
+                    <div className="absolute z-20 h-full w-full border-l border-r border-black" />
                   </div>
-                  <span
-                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-300/80 transition-all duration-300 ease-out"
-                    style={{ left: clarityHandleLines.start }}
-                  />
-                  <span
-                    className="pointer-events-none absolute top-2 bottom-2 w-[3px] rounded-full bg-gray-300/80 transition-all duration-300 ease-out"
-                    style={{ left: clarityHandleLines.end }}
-                  />
                 </div>
               </div>
               <div className="mt-4">
                 <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-[#f8f5ef] px-2 py-3">
                   <div
                     className="absolute top-1/2 z-0 h-12 -translate-y-1/2 rounded-2xl border-2 border-black bg-white shadow-[0px_16px_40px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out"
-                    style={buildHighlightStyle(rangeSelections.clarity, clarityOptions.length, 4)}
+                    style={buildHighlightStyle(
+                      rangeSelections.clarity,
+                      clarityCodes.length,
+                      4
+                    )}
                   />
                   <div className="relative z-10 grid grid-cols-7 text-center text-xs font-semibold uppercase tracking-[0.08em]">
-                    {clarityOptions.map((clarity, index) => {
-                      const isActive = isIndexWithinRange(rangeSelections.clarity, index);
+                    {clarityCodes.map((clarity, index) => {
+                      const isActive = isIndexWithinRange(
+                        rangeSelections.clarity,
+                        index
+                      );
                       return (
                         <button
                           key={clarity}
@@ -477,22 +759,39 @@ export default function StoneSelectionSection({
                 Cut
                 <InfoDot />
               </div>
-              <div className="mt-3 flex overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
-                {cutOptions.map(({ label, value }, index) => {
-                  const isActive = filters.cut === value;
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => handleCutChange(value)}
-                      className={`flex-1 px-4 py-2 text-xs font-semibold uppercase tracking-widest ${
-                        isActive ? "bg-white text-gray-900" : "text-gray-500 hover:text-gray-800"
-                      } ${index !== 0 ? "border-l border-gray-200" : ""}`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
+              <div className="mt-3">
+                <div className="relative flex h-10 overflow-hidden rounded-lg border border-gray-200 bg-gray-100 md:mt-4">
+                  {dynamicCutOptions.map(({ label, value }, index) => {
+                    const isActive = isIndexWithinRange(
+                      rangeSelections.cut,
+                      index
+                    );
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => handleBandSelection("cut", index)}
+                        className={`relative z-10 flex h-full flex-1 items-center justify-center px-2 text-center text-[0.8rem] font-semibold uppercase leading-tight tracking-[0.18em] ${
+                          isActive ? "text-gray-900" : "text-gray-600"
+                        }`}
+                      >
+                        <span className="font-[system-ui]">{label}</span>
+                        {index < dynamicCutOptions.length - 1 && (
+                          <span className="absolute right-0 top-0 bottom-0 w-px bg-gray-300" />
+                        )}
+                      </button>
+                    );
+                  })}
+                  <div
+                    className="pointer-events-none absolute top-0 bottom-0 rounded-lg bg-white transition-all duration-500"
+                    style={buildHighlightStyle(
+                      rangeSelections.cut,
+                      cutCodes.length
+                    )}
+                  >
+                    <div className="absolute inset-0 rounded-lg border border-black ring-1 ring-black" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -500,7 +799,9 @@ export default function StoneSelectionSection({
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="flex items-baseline justify-between gap-4">
-                <span className="text-lg font-semibold text-gray-900">Carat</span>
+                <span className="text-lg font-semibold text-gray-900">
+                  Carat
+                </span>
                 <span className="text-sm text-gray-400">2 ct — 11 ct</span>
               </div>
               <div className="mt-4">
@@ -516,15 +817,23 @@ export default function StoneSelectionSection({
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-400">Minimum</p>
-                    <p className="text-lg font-semibold text-gray-900">{filters.carat.min} ct</p>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Minimum
+                    </p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {filters.carat.min} ct
+                    </p>
                   </div>
                   <SpinnerButtons />
                 </div>
                 <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-400">Maximum</p>
-                    <p className="text-lg font-semibold text-gray-900">{filters.carat.max} ct</p>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Maximum
+                    </p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {filters.carat.max} ct
+                    </p>
                   </div>
                   <SpinnerButtons />
                 </div>
@@ -536,14 +845,18 @@ export default function StoneSelectionSection({
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-400">Minimum</p>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Minimum
+                    </p>
                     <div className="mt-1 flex items-baseline gap-0">
                       <span className="text-sm text-gray-400">$</span>
                       <input
                         type="text"
                         inputMode="numeric"
                         value={filters.budget.min}
-                        onChange={(event) => handleBudgetInput("min", event.target.value)}
+                        onChange={(event) =>
+                          handleBudgetInput("min", event.target.value)
+                        }
                         className="w-24 bg-transparent text-right text-lg font-semibold text-gray-900 focus:outline-none pl-0 leading-none"
                       />
                     </div>
@@ -555,14 +868,18 @@ export default function StoneSelectionSection({
                 </div>
                 <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-400">Maximum</p>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Maximum
+                    </p>
                     <div className="mt-1 flex items-baseline gap-0">
                       <span className="text-sm text-gray-400">$</span>
                       <input
                         type="text"
                         inputMode="numeric"
                         value={filters.budget.max}
-                        onChange={(event) => handleBudgetInput("max", event.target.value)}
+                        onChange={(event) =>
+                          handleBudgetInput("max", event.target.value)
+                        }
                         className="w-24 bg-transparent text-right text-lg font-semibold text-gray-900 focus:outline-none pl-0 leading-none"
                       />
                     </div>
@@ -576,9 +893,11 @@ export default function StoneSelectionSection({
             </div>
 
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="text-lg font-semibold text-gray-900">Certificate</div>
+              <div className="text-lg font-semibold text-gray-900">
+                Certificate
+              </div>
               <div className="mt-4 flex gap-3">
-                {certificateOptions.map((certificate) => {
+                {certificateCodes.map((certificate) => {
                   const isActive = filters.certificate.includes(certificate);
                   return (
                     <button
@@ -586,7 +905,9 @@ export default function StoneSelectionSection({
                       type="button"
                       onClick={() => toggleCertificate(certificate)}
                       className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-semibold uppercase tracking-wide transition ${
-                        isActive ? "border-black bg-white text-gray-900 shadow-sm" : "border-gray-200 bg-gray-50 text-gray-500 hover:text-gray-800"
+                        isActive
+                          ? "border-black bg-white text-gray-900 shadow-sm"
+                          : "border-gray-200 bg-gray-50 text-gray-500 hover:text-gray-800"
                       }`}
                     >
                       {certificate}
@@ -613,12 +934,28 @@ export default function StoneSelectionSection({
               <span>Showing 1-14 of 401</span>
               <div className="flex gap-2">
                 <button className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M15 6l-6 6 6 6" />
                   </svg>
                 </button>
                 <button className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M9 18l6-6-6-6" />
                   </svg>
                 </button>
@@ -634,13 +971,14 @@ export default function StoneSelectionSection({
         </div>
 
         <div className="mt-16">
-            <DiamondGrid
-              stoneType={stoneType}
-              selectedShape={selectedShape}
-              filters={filters}
-              onMoreInfo={onMoreInfo}
-              onAddPendant={onAddPendant}
-            />
+          <DiamondGrid
+            stoneType={stoneType}
+            selectedShape={selectedShape}
+            filters={filters}
+            onMoreInfo={onMoreInfo}
+            onAddPendant={onAddPendant}
+            shapeIconSvgMap={shapeIconSvgMap}
+          />
         </div>
       </div>
     </section>

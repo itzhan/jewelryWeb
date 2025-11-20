@@ -15,7 +15,7 @@ export default function Home() {
       <TopBanner />
       <Header />
       <MainNav />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="page-width py-8">
         <Breadcrumb />
       </div>
       <StepExperience />

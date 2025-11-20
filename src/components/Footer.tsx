@@ -3,7 +3,7 @@ import { MapPin, Phone, Mail, Instagram, Facebook } from 'lucide-react';
 export default function Footer() {
   return (
     <footer className="bg-black text-white py-12">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="page-width">
         {/* Top section with brand info */}
         <div className="text-center mb-12 max-w-2xl mx-auto">
           <h2 className="text-3xl font-serif mb-4">KEYZAR</h2>

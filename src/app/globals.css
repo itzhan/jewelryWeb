@@ -64,6 +64,18 @@
   .custom-product-container {
     scroll-behavior: smooth;
   }
+  .page-width {
+    width: 100%;
+    max-width: min(1600px, 100%);
+    margin-left: auto;
+    margin-right: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 768px) {
+    .page-width {
+      padding-inline: 2rem;
+    }
+  }
 }
 
 /* Extended layout helpers for fused views */
@@ -105,6 +117,39 @@
 .step-three-view h5,
 .step-three-view h6 {
   font-family: inherit;
+}
+
+@layer utilities {
+  .animate-overlay-fade {
+    animation: overlayFade 0.35s ease-out forwards;
+  }
+
+  .animate-modal-pop {
+    animation: modalPop 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+}
+
+@keyframes overlayFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalPop {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1.02);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
 }
 
 @layer base {

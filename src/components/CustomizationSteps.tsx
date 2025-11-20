@@ -1,13 +1,19 @@
-'use client';
+"use client";
 
-import type { KeyboardEvent } from "react";
-import { Check, Gem } from "lucide-react";
+import { useMemo, type KeyboardEvent } from "react";
+import { Check, Gem, Diamond, Sparkles, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { BackendStoneItem } from "@/lib/backend";
+import type { StepOneProduct } from "@/components/StepOneLanding";
+import type { SettingChoice } from "@/components/AddSettingModal";
 
 type StepNumber = 1 | 2 | 3;
 interface CustomizationStepsProps {
   activeStep: StepNumber;
   onStepChange?: (step: StepNumber) => void;
+  selectedStone?: BackendStoneItem | null;
+  selectedProduct?: StepOneProduct | null;
+  settingChoice?: SettingChoice | null;
 }
 
 interface StepDetail {
@@ -25,44 +31,157 @@ interface StepConfig {
   detail: StepDetail;
 }
 
-const steps: StepConfig[] = [
-  {
-    value: 1,
-    title: "SETTING",
-    subtitle: "Select your",
-    detail: {
-      label: "The Amelia",
-      actionLabel: "View",
-      price: "$670",
-    },
-  },
-  {
-    value: 2,
-    title: "STONE",
-    subtitle: "Select your",
-    detail: {
-      label: "1Ct Princess Cut Lab Created Sapphire",
-      actionLabel: "Change",
-      price: "$500",
-    },
-  },
-  {
-    value: 3,
-    title: "PENDANT",
-    subtitle: "Complete your",
-    detail: {
-      label: "Total Price",
-      price: "$1,170",
-      align: "end",
-      icon: <Gem className="w-5 h-5 text-gray-700" />,
-    },
-  },
-];
+const parseProductPrice = (
+  price?: string | null
+): { currency: string | null; amount: number | null } => {
+  if (!price) return { currency: null, amount: null };
+  const parts = price.trim().split(/\s+/);
+  if (parts.length === 0) return { currency: null, amount: null };
+  if (parts.length === 1) {
+    const amount = Number(parts[0].replace(/[^0-9.]/g, ""));
+    return {
+      currency: null,
+      amount: Number.isNaN(amount) ? null : amount,
+    };
+  }
+  const currency = parts[0];
+  const rawAmount = parts.slice(1).join(" ");
+  const amount = Number(rawAmount.replace(/[^0-9.]/g, ""));
+  return {
+    currency,
+    amount: Number.isNaN(amount) ? null : amount,
+  };
+};
+
+const formatCurrencyAmount = (
+  currency: string | null | undefined,
+  amount: number | null | undefined
+): string | undefined => {
+  if (amount == null || Number.isNaN(amount)) return undefined;
+  const code = (currency && currency.trim()) || "USD";
+  return `${code} ${amount.toLocaleString()}`;
+};
 
 export default function CustomizationSteps({
   activeStep,
   onStepChange,
+  selectedStone,
+  selectedProduct,
+  settingChoice,
 }: CustomizationStepsProps) {
+  const steps = useMemo<StepConfig[]>(() => {
+    const { currency: productCurrency, amount: productAmount } =
+      parseProductPrice(selectedProduct?.price);
+
+    const stonePrice = selectedStone?.price ?? null;
+    const stoneCurrency = selectedStone?.currency ?? null;
+
+    const stoneLabel: string = selectedStone
+      ? `${selectedStone.carat.toFixed(2)}ct ${selectedStone.shape} ${
+          selectedStone.type === "lab_grown" ? "Lab Sapphire" : "Sapphire"
+        }`
+      : "Select your sapphire";
+
+    const stonePriceLabel = formatCurrencyAmount(
+      stoneCurrency || productCurrency,
+      stonePrice
+    );
+
+    const settingLabel: string = selectedProduct?.name ?? "Select your setting";
+
+    const settingPriceLabel =
+      selectedProduct?.price && selectedProduct.price.trim().length > 0
+        ? selectedProduct.price
+        : undefined;
+
+    const totalAmount = (stonePrice ?? 0) + (productAmount ?? 0);
+    const hasAnyPrice = (stonePrice ?? 0) > 0 || (productAmount ?? 0) > 0;
+
+    const totalPriceLabel = hasAnyPrice
+      ? formatCurrencyAmount(stoneCurrency || productCurrency, totalAmount)
+      : undefined;
+
+    const stoneIconElement = selectedStone?.shapeIconSvg ? (
+      <div
+        className="w-5 h-5"
+        // 后端返回的是一段 SVG 字符串，只用于展示图标
+        dangerouslySetInnerHTML={{ __html: selectedStone.shapeIconSvg! }}
+      />
+    ) : null;
+
+    const settingIconElement =
+      settingChoice === "necklace" ? (
+        <Sparkles className="w-5 h-5 text-amber-500" />
+      ) : settingChoice === "ring" ? (
+        <Diamond className="w-5 h-5 text-slate-900" />
+      ) : settingChoice === "earring" ? (
+        <Star className="w-5 h-5 text-rose-500" />
+      ) : null;
+
+    const stoneStepIcon: Partial<StepDetail> = stoneIconElement
+      ? { icon: stoneIconElement }
+      : {};
+
+    const settingStepIcon: Partial<StepDetail> = settingIconElement
+      ? { icon: settingIconElement }
+      : {};
+
+    const totalStepIcon: JSX.Element | undefined =
+      stoneIconElement || settingIconElement ? (
+        <div className="flex items-center gap-2">
+          {settingIconElement}
+          {stoneIconElement}
+        </div>
+      ) : (
+        <Gem className="w-5 h-5 text-gray-700" />
+      );
+
+    const pendantTitle =
+      settingChoice === "ring"
+        ? "RING"
+        : settingChoice === "necklace"
+        ? "PENDANT"
+        : settingChoice === "earring"
+        ? "EARRING"
+        : "PENDANT";
+
+    return [
+      {
+        value: 1 as StepNumber,
+        title: "STONE",
+        subtitle: "Select your",
+        detail: {
+          label: stoneLabel,
+          actionLabel: selectedStone ? "Change" : "Select",
+          price: stonePriceLabel,
+          ...(stoneStepIcon as Partial<StepDetail>),
+        },
+      },
+      {
+        value: 2 as StepNumber,
+        title: "SETTING",
+        subtitle: "Select your",
+        detail: {
+          label: settingLabel,
+          actionLabel: selectedProduct ? "View" : "Select",
+          price: settingPriceLabel,
+          ...(settingStepIcon as Partial<StepDetail>),
+        },
+      },
+      {
+        value: 3 as StepNumber,
+        title: pendantTitle,
+        subtitle: "Complete your",
+        detail: {
+          label: "Total Price",
+          price: totalPriceLabel,
+          align: "end",
+          icon: totalStepIcon,
+        },
+      },
+    ];
+  }, [selectedStone, selectedProduct, settingChoice]);
+
   const interactiveProps = (step: StepNumber) => {
     if (!onStepChange) {
       return {};
@@ -75,7 +194,8 @@ export default function CustomizationSteps({
       }
     };
 
-    const ariaCurrent: "step" | undefined = activeStep === step ? "step" : undefined;
+    const ariaCurrent: "step" | undefined =
+      activeStep === step ? "step" : undefined;
 
     return {
       role: "button" as const,
@@ -109,7 +229,9 @@ export default function CustomizationSteps({
     <div
       className={cn(
         "flex flex-col flex-1 transition-colors duration-300",
-        detail.align === "end" ? "text-right items-end" : "text-left items-start",
+        detail.align === "end"
+          ? "text-right items-end"
+          : "text-left items-start",
         isActive ? "text-gray-600" : "text-gray-500"
       )}
     >
@@ -133,7 +255,9 @@ export default function CustomizationSteps({
             type="button"
             className={cn(
               "underline transition-colors",
-              isActive ? "text-gray-700 hover:text-gray-900" : "text-gray-400 hover:text-gray-600"
+              isActive
+                ? "text-gray-700 hover:text-gray-900"
+                : "text-gray-400 hover:text-gray-600"
             )}
             onClick={(event) => {
               event.stopPropagation();
@@ -172,7 +296,9 @@ export default function CustomizationSteps({
                   {...interactiveProps(step.value)}
                 >
                   <div className="flex items-center gap-5 min-w-[170px]">
-                    <span className="text-4xl font-light text-gray-900">{step.value}</span>
+                    <span className="text-4xl font-light text-gray-900">
+                      {step.value}
+                    </span>
                     <div className="leading-tight">
                       <div className="text-[13px] font-medium text-gray-500">
                         {step.subtitle}
@@ -183,7 +309,11 @@ export default function CustomizationSteps({
                     </div>
                   </div>
 
-                  <StepDetail detail={step.detail} step={step.value} isActive={isActive} />
+                  <StepDetail
+                    detail={step.detail}
+                    step={step.value}
+                    isActive={isActive}
+                  />
 
                   <div className="flex items-center gap-3">
                     {step.detail.icon && (

@@ -3,7 +3,7 @@ import { Search, User, ShoppingCart } from 'lucide-react';
 export default function Header() {
   return (
     <div className="border-b">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="page-width py-4 flex items-center justify-between">
         <div className="flex items-center gap-2 flex-1 max-w-xs">
           <Search className="w-5 h-5 text-gray-500" />
           <input

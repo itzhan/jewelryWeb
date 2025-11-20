@@ -3,7 +3,7 @@ import { Plane, RotateCcw, Shield } from 'lucide-react';
 export default function Guarantees() {
   return (
     <div className="bg-gray-900 text-white py-16">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="page-width">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           <GuaranteeItem
             icon={<Plane className="w-12 h-12" />}

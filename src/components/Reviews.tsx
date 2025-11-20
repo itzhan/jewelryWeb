@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 export default function Reviews() {
   return (
     <div className="bg-white py-12">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="page-width">
         <div className="flex items-start justify-between mb-8">
           <div className="flex items-center gap-6">
             <div>

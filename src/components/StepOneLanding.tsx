@@ -11,73 +11,8 @@ export interface StepOneProduct {
   colors: ("white" | "yellow" | "rose")[];
 }
 
-const products: StepOneProduct[] = [
-  {
-    id: 1,
-    name: "The Riley",
-    price: "$520",
-    image: "https://ext.same-assets.com/1796274538/2753797965.jpeg",
-    colors: ["white", "yellow", "rose"],
-  },
-  {
-    id: 2,
-    name: "The Amelia",
-    price: "$670",
-    image: "https://ext.same-assets.com/1796274538/3238944449.jpeg",
-    colors: ["white", "yellow", "rose"],
-  },
-  {
-    id: 3,
-    name: "The Hidden",
-    price: "$750",
-    image: "https://ext.same-assets.com/1796274538/2503640517.jpeg",
-    colors: ["white", "yellow", "rose"],
-  },
-  {
-    id: 4,
-    name: "The Ariana",
-    price: "$950",
-    image: "https://ext.same-assets.com/1796274538/1714726021.jpeg",
-    colors: ["white", "yellow", "rose"],
-  },
-  {
-    id: 5,
-    name: "The Billie",
-    price: "$1,050",
-    image: "https://ext.same-assets.com/1796274538/2297414049.jpeg",
-    colors: ["white", "yellow", "rose"],
-  },
-  {
-    id: 6,
-    name: "The Aubrey",
-    price: "$1,100",
-    image: "https://ext.same-assets.com/1796274538/2378482463.jpeg",
-    colors: ["white", "yellow", "rose"],
-  },
-  {
-    id: 7,
-    name: "The Olivia",
-    price: "$1,200",
-    image: "https://ext.same-assets.com/1796274538/769952172.jpeg",
-    colors: ["white", "yellow", "rose"],
-  },
-  {
-    id: 8,
-    name: "The Isabella",
-    price: "$1,300",
-    image: "https://ext.same-assets.com/1796274538/2159421618.jpeg",
-    colors: ["white", "yellow", "rose"],
-  },
-  {
-    id: 9,
-    name: "The Harper",
-    price: "$1,600",
-    image: "https://ext.same-assets.com/1796274538/1597554322.jpeg",
-    colors: ["white", "yellow", "rose"],
-  },
-];
-
 interface StepOneLandingProps {
+  products: StepOneProduct[];
   onMoreInfo: (product: StepOneProduct) => void;
   onCompleteRing: (product: StepOneProduct) => void;
 }
@@ -91,10 +26,11 @@ const overlayButtonSecondary =
 const priceToNumber = (price: string) => Number(price.replace(/[^0-9.]/g, ""));
 
 export default function StepOneLanding({
+  products,
   onMoreInfo,
   onCompleteRing,
 }: StepOneLandingProps) {
-  const sortedProducts = useMemo(() => [...products], []);
+  const sortedProducts = useMemo(() => [...products], [products]);
   const [selectedColors, setSelectedColors] = useState<
     Record<number, StepOneProduct["colors"][number]>
   >(() =>
@@ -110,7 +46,7 @@ export default function StepOneLanding({
 
   return (
     <div className="bg-white">
-      <div className="max-w-7xl mx-auto px-4 pt-12 text-center">
+      <div className="page-width pt-12 text-center">
         <h2 className="text-4xl font-light mb-4">Pendants</h2>
         <p className="text-gray-600">
           Discover our collection of made to order pendants and customize it to
@@ -118,7 +54,7 @@ export default function StepOneLanding({
         </p>
       </div>
 
-      <div className="max-w-[1500px] mx-auto px-4 pb-16 pt-8">
+      <div className="page-width pb-16 pt-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {sortedProducts.map((product) => {
             const installment = (priceToNumber(product.price) / 4).toFixed(2);
@@ -134,7 +70,8 @@ export default function StepOneLanding({
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="w-full aspect-square object-cover rounded-t-2xl transition duration-500"
+                      loading="lazy"
+                      className="w-full h-[420px] min-h-[340px] object-contain rounded-t-2xl transition duration-500"
                     />
                     <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors z-10">
                       <Heart className="h-5 w-5 text-gray-600" />
@@ -261,5 +198,3 @@ export default function StepOneLanding({
     </div>
   );
 }
-
-export const pendantProducts = products;
