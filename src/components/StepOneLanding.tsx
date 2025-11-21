@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Heart } from "lucide-react";
+import { fetchProductDetail, resolveBackendImageUrl } from "@/lib/backend";
 
 export interface StepOneProduct {
   id: number;
@@ -25,6 +26,43 @@ const overlayButtonSecondary =
 
 const priceToNumber = (price: string) => Number(price.replace(/[^0-9.]/g, ""));
 
+const colorPalettes: Record<
+  StepOneProduct["colors"][number],
+  string[]
+> = {
+  white: [
+    "#CCCCCC",
+    "#F1F1F1",
+    "#F7F7F7",
+    "#E2E2E2",
+    "#C4C4C4",
+    "#B3B3B3",
+    "#E3E3E3",
+    "#F0F0F0",
+  ],
+  yellow: ["#FBC926", "#FFFBCC", "#F8F0BB", "#E7D28E", "#CCA246", "#C3922E"],
+  rose: [
+    "#FE7A69",
+    "#FDD1CB",
+    "#F5B9B1",
+    "#F1988D",
+    "#E86C5C",
+    "#E26B5B",
+    "#FD968F",
+    "#FFDDD9",
+  ],
+};
+
+const buildPaletteGradient = (colors: string[]) => {
+  if (colors.length === 0) return "transparent";
+  if (colors.length === 1) return colors[0];
+  const stops = colors.map((c, idx) => {
+    const pct = Math.round((idx / (colors.length - 1)) * 100);
+    return `${c} ${pct}%`;
+  });
+  return `linear-gradient(135deg, ${stops.join(", ")})`;
+};
+
 export default function StepOneLanding({
   products,
   onMoreInfo,
@@ -39,6 +77,112 @@ export default function StepOneLanding({
       return acc;
     }, {})
   );
+  const [productImages, setProductImages] = useState<Record<number, string[]>>(
+    {}
+  );
+  const [activeImageIndex, setActiveImageIndex] = useState<
+    Record<number, number>
+  >({});
+  const [loadingProductId, setLoadingProductId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setProductImages((prev) => {
+      const next = { ...prev };
+      products.forEach((product) => {
+        if (!next[product.id] || next[product.id].length === 0) {
+          next[product.id] = [product.image];
+        }
+      });
+      return next;
+    });
+    setActiveImageIndex((prev) => {
+      const next = { ...prev };
+      products.forEach((product) => {
+        if (prev[product.id] == null) {
+          next[product.id] = 0;
+        }
+      });
+      return next;
+    });
+  }, [products]);
+
+  const ensureProductImages = async (product: StepOneProduct) => {
+    const existing = productImages[product.id];
+    if ((existing && existing.length > 1) || loadingProductId === product.id) {
+      return;
+    }
+    setLoadingProductId(product.id);
+    try {
+      const detail = await fetchProductDetail(product.id);
+      const sortedImages =
+        detail.images && detail.images.length
+          ? [...detail.images].sort((a, b) => {
+              const aOrder = a.sortOrder ?? 0;
+              const bOrder = b.sortOrder ?? 0;
+              return aOrder - bOrder;
+            })
+          : [];
+
+      const resolvedImages = sortedImages
+        .map((img) => {
+          const rawUrl =
+            img.url ??
+            (img as { imageUrl?: string }).imageUrl ??
+            (img as { image?: string }).image;
+          const url = resolveBackendImageUrl(rawUrl || "");
+          return {
+            url,
+            isPrimary: !!img.isPrimary,
+            sortOrder: img.sortOrder ?? 0,
+          };
+        })
+        .filter((img) => !!img.url);
+
+      const primaryImage =
+        resolvedImages.find((img) => img.isPrimary) ?? resolvedImages[0] ?? null;
+
+      const orderedImages: typeof resolvedImages =
+        primaryImage != null
+          ? [
+              primaryImage,
+              ...resolvedImages
+                .filter((img) => img !== primaryImage && !img.isPrimary)
+                .sort((a, b) => a.sortOrder - b.sortOrder),
+            ]
+          : resolvedImages;
+
+      const baseImage = resolveBackendImageUrl(product.image);
+      // 保证列表主图无论后端排序如何，都在首位，避免悬浮时切换首帧跳动
+      const urls = [baseImage, ...orderedImages.map((img) => img.url)].reduce<
+        string[]
+      >((acc, url) => {
+        if (!url) return acc;
+        if (acc.includes(url)) return acc;
+        acc.push(url);
+        return acc;
+      }, []);
+
+      setProductImages((prev) => ({ ...prev, [product.id]: urls }));
+      setActiveImageIndex((prev) => ({
+        ...prev,
+        [product.id]: 0,
+      }));
+    } catch (e) {
+      console.error("加载商品图片失败", e);
+    } finally {
+      setLoadingProductId((prev) => (prev === product.id ? null : prev));
+    }
+  };
+
+  const handleImageChange = (productId: number, direction: 1 | -1) => {
+    const images = productImages[productId] ?? [];
+    if (!images.length) return;
+    setActiveImageIndex((prev) => {
+      const current = prev[productId] ?? 0;
+      const next = (current + direction + images.length) % images.length;
+      return { ...prev, [productId]: next };
+    });
+  };
 
   const selectColor = (productId: number, color: StepOneProduct["colors"][number]) => {
     setSelectedColors((prev) => ({ ...prev, [productId]: color }));
@@ -63,28 +207,64 @@ export default function StepOneLanding({
               <div
                 key={product.id}
                 className="group relative cursor-pointer overflow-visible z-0 hover:z-30"
+                onMouseEnter={() => ensureProductImages(product)}
+                onClick={() => onMoreInfo(product)}
               >
                 {/* 主卡片本体 */}
                 <div className="relative rounded-2xl border border-gray-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.1)] transition-[border-radius,_transform,_box-shadow] duration-300 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_20px_45px_rgba(15,23,42,0.16)] group-hover:scale-[1.015] transform z-10 group-hover:rounded-bl-none group-hover:rounded-br-none">
                   <div className="relative">
                     <img
-                      src={product.image}
+                      src={
+                        productImages[product.id]?.[
+                          activeImageIndex[product.id] ?? 0
+                        ] ?? product.image
+                      }
                       alt={product.name}
                       loading="lazy"
                       className="w-full h-[420px] min-h-[340px] object-contain rounded-t-2xl transition duration-500"
                     />
-                    <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors z-10">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      loading="lazy"
+                      className="hidden"
+                    />
+                    <button
+                      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       <Heart className="h-5 w-5 text-gray-600" />
                     </button>
                     <div className="absolute left-4 top-4 rounded-full border border-black bg-white px-3 py-1 text-[0.65rem] uppercase tracking-[0.4em] text-black opacity-0 transition-all duration-300 -translate-x-6 group-hover:translate-x-0 group-hover:opacity-100">
                       Customizable
                     </div>
                     <div className="absolute left-1/2 bottom-4 -translate-x-1/2 flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.35em] text-gray-500 opacity-0 transition-all duration-300 translate-y-3 group-hover:translate-y-0 group-hover:opacity-100">
-                      <span className="text-base hover:text-black">‹</span>
+                      <button
+                        type="button"
+                        className="text-base hover:text-black"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          ensureProductImages(product);
+                          handleImageChange(product.id, -1);
+                        }}
+                      >
+                        ‹
+                      </button>
                       <span className="text-sm font-semibold text-black tracking-[0.4em]">
-                        1 / 11
+                        {(activeImageIndex[product.id] ?? 0) + 1} /{" "}
+                        {(productImages[product.id]?.length ?? 1) || 1}
                       </span>
-                      <span className="text-base hover:text-black">›</span>
+                      <button
+                        type="button"
+                        className="text-base hover:text-black"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          ensureProductImages(product);
+                          handleImageChange(product.id, 1);
+                        }}
+                      >
+                        ›
+                      </button>
                     </div>
                   </div>
 
@@ -100,21 +280,21 @@ export default function StepOneLanding({
                       </div>
                       <div className="flex gap-2 items-center">
                         {product.colors.map((color, idx) => {
-                          const buttonClasses = `w-8 h-8 rounded-full border-2 transition focus-visible:outline-none ${
-                            color === activeColor ? "border-black shadow-lg" : "border-gray-300"
+                          const isActive = color === activeColor;
+                          const buttonClasses = `relative w-7 h-7 rounded-full border transition focus-visible:outline-none ${
+                            isActive
+                              ? "border-gray-400 ring-2 ring-gray-300/70 ring-offset-1 ring-offset-white shadow-[0_0_0_1px_rgba(0,0,0,0.08)]"
+                              : "border-gray-300"
                           }`;
-                          const colorClass =
-                            color === "white"
-                              ? "bg-gray-100"
-                              : color === "yellow"
-                              ? "bg-gradient-to-br from-yellow-200 to-yellow-400"
-                              : "bg-gradient-to-br from-rose-200 to-rose-400";
+                          const palette = colorPalettes[color];
+                          const gradient = buildPaletteGradient(palette);
                           return (
                             <button
                               key={`dot-${product.id}-${idx}`}
                               type="button"
                               aria-label={`Select ${color}`}
-                              className={`${buttonClasses} ${colorClass}`}
+                              className={buttonClasses}
+                              style={{ background: gradient }}
                               onClick={(event) => {
                                 event.stopPropagation();
                                 selectColor(product.id, color);

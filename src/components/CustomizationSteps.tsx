@@ -1,16 +1,17 @@
 "use client";
 
 import { useMemo, type KeyboardEvent } from "react";
-import { Check, Gem, Diamond, Sparkles, Star } from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BackendStoneItem } from "@/lib/backend";
 import type { StepOneProduct } from "@/components/StepOneLanding";
 import type { SettingChoice } from "@/components/AddSettingModal";
 
 type StepNumber = 1 | 2 | 3;
+type StepIntent = "select" | "change" | "view" | "card" | undefined;
 interface CustomizationStepsProps {
   activeStep: StepNumber;
-  onStepChange?: (step: StepNumber) => void;
+  onStepChange?: (step: StepNumber, intent?: StepIntent) => void;
   selectedStone?: BackendStoneItem | null;
   selectedProduct?: StepOneProduct | null;
   settingChoice?: SettingChoice | null;
@@ -101,41 +102,6 @@ export default function CustomizationSteps({
       ? formatCurrencyAmount(stoneCurrency || productCurrency, totalAmount)
       : undefined;
 
-    const stoneIconElement = selectedStone?.shapeIconSvg ? (
-      <div
-        className="w-5 h-5"
-        // 后端返回的是一段 SVG 字符串，只用于展示图标
-        dangerouslySetInnerHTML={{ __html: selectedStone.shapeIconSvg! }}
-      />
-    ) : null;
-
-    const settingIconElement =
-      settingChoice === "necklace" ? (
-        <Sparkles className="w-5 h-5 text-amber-500" />
-      ) : settingChoice === "ring" ? (
-        <Diamond className="w-5 h-5 text-slate-900" />
-      ) : settingChoice === "earring" ? (
-        <Star className="w-5 h-5 text-rose-500" />
-      ) : null;
-
-    const stoneStepIcon: Partial<StepDetail> = stoneIconElement
-      ? { icon: stoneIconElement }
-      : {};
-
-    const settingStepIcon: Partial<StepDetail> = settingIconElement
-      ? { icon: settingIconElement }
-      : {};
-
-    const totalStepIcon: JSX.Element | undefined =
-      stoneIconElement || settingIconElement ? (
-        <div className="flex items-center gap-2">
-          {settingIconElement}
-          {stoneIconElement}
-        </div>
-      ) : (
-        <Gem className="w-5 h-5 text-gray-700" />
-      );
-
     const pendantTitle =
       settingChoice === "ring"
         ? "RING"
@@ -153,8 +119,7 @@ export default function CustomizationSteps({
         detail: {
           label: stoneLabel,
           actionLabel: selectedStone ? "Change" : "Select",
-          price: stonePriceLabel,
-          ...(stoneStepIcon as Partial<StepDetail>),
+          price: stonePriceLabel
         },
       },
       {
@@ -164,8 +129,7 @@ export default function CustomizationSteps({
         detail: {
           label: settingLabel,
           actionLabel: selectedProduct ? "View" : "Select",
-          price: settingPriceLabel,
-          ...(settingStepIcon as Partial<StepDetail>),
+          price: settingPriceLabel
         },
       },
       {
@@ -176,7 +140,6 @@ export default function CustomizationSteps({
           label: "Total Price",
           price: totalPriceLabel,
           align: "end",
-          icon: totalStepIcon,
         },
       },
     ];
@@ -190,7 +153,7 @@ export default function CustomizationSteps({
     const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        onStepChange(step);
+        onStepChange(step, "card");
       }
     };
 
@@ -200,7 +163,7 @@ export default function CustomizationSteps({
     return {
       role: "button" as const,
       tabIndex: 0,
-      onClick: () => onStepChange(step),
+      onClick: () => onStepChange(step, "card"),
       onKeyDown: handleKeyDown,
       "aria-current": ariaCurrent,
     };
@@ -208,13 +171,13 @@ export default function CustomizationSteps({
 
   const getWrapperClasses = () => "relative flex-1 min-w-[260px]";
 
-  const getCardClasses = (isActive: boolean, isCompleted: boolean) =>
+  const getCardClasses = (isActive: boolean, _isCompleted: boolean) =>
     cn(
-      "relative h-full flex items-center gap-6 px-6 py-5 border overflow-hidden transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30 bg-white rounded-[999px]",
+      "group relative h-full flex items-center gap-6 px-5 py-4 border overflow-hidden transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20 bg-white/90 backdrop-blur-sm rounded-2xl shadow-[0_10px_22px_rgba(17,24,39,0.08)]",
       isActive
-        ? "border-2 border-black shadow-[0_12px_24px_rgba(15,23,42,0.15)]"
-        : "border border-[#dcdcdc] bg-[#f7f7f7]",
-      onStepChange && "cursor-pointer"
+        ? "border-black/80 shadow-[0_16px_34px_rgba(17,24,39,0.14)]"
+        : "border-[#e5e5e5] hover:-translate-y-1 hover:shadow-[0_16px_30px_rgba(17,24,39,0.12)]",
+      onStepChange && "cursor-pointer select-none"
     );
 
   const StepDetail = ({
@@ -228,7 +191,7 @@ export default function CustomizationSteps({
   }) => (
     <div
       className={cn(
-        "flex flex-col flex-1 transition-colors duration-300",
+        "flex flex-col flex-1 min-w-0 transition-colors duration-300",
         detail.align === "end"
           ? "text-right items-end"
           : "text-left items-start",
@@ -237,7 +200,7 @@ export default function CustomizationSteps({
     >
       <div
         className={cn(
-          "font-medium truncate transition-colors duration-300 text-[15px]",
+          "font-semibold truncate transition-colors duration-300 text-sm md:text-base",
           isActive ? "text-gray-900" : "text-gray-700"
         )}
       >
@@ -245,7 +208,7 @@ export default function CustomizationSteps({
       </div>
       <div
         className={cn(
-          "flex items-center gap-3 text-xs transition-colors duration-300",
+          "flex items-center gap-3 text-[12px] transition-colors duration-300",
           detail.align === "end" && "justify-end",
           isActive ? "text-gray-500" : "text-gray-400"
         )}
@@ -254,14 +217,20 @@ export default function CustomizationSteps({
           <button
             type="button"
             className={cn(
-              "underline transition-colors",
+              "font-semibold tracking-[0.08em] uppercase transition-colors border-b border-transparent pb-[1px]",
               isActive
-                ? "text-gray-700 hover:text-gray-900"
-                : "text-gray-400 hover:text-gray-600"
+                ? "text-gray-800 hover:text-black hover:border-black"
+                : "text-gray-400 hover:text-gray-600 hover:border-gray-600"
             )}
             onClick={(event) => {
               event.stopPropagation();
-              onStepChange?.(step);
+              const intent =
+                detail.actionLabel?.toLowerCase() === "change"
+                  ? "change"
+                  : detail.actionLabel?.toLowerCase() === "view"
+                  ? "view"
+                  : "select";
+              onStepChange?.(step, intent);
             }}
           >
             {detail.actionLabel}
@@ -270,7 +239,7 @@ export default function CustomizationSteps({
         {detail.price && (
           <span
             className={cn(
-              "text-sm font-medium",
+              "text-sm font-medium truncate",
               isActive ? "text-gray-600" : "text-gray-400"
             )}
           >
@@ -282,8 +251,8 @@ export default function CustomizationSteps({
   );
 
   return (
-    <div className="steps-configuration-container w-full border border-[#e1e1e1] rounded-[40px] bg-[#f5f4f4] px-2 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]">
-      <div className="overflow-x-auto">
+    <div className="steps-configuration-container w-full border border-[#e7e7e7] rounded-[28px] bg-gradient-to-r from-[#f7f7f7] via-white to-[#f7f7f7] px-3 py-4 shadow-[0_18px_36px_rgba(17,24,39,0.08)]">
+      <div className="overflow-x-auto pb-1">
         <div className="flex min-w-[720px] gap-4">
           {steps.map((step) => {
             const isActive = activeStep === step.value;
@@ -295,15 +264,22 @@ export default function CustomizationSteps({
                   className={getCardClasses(isActive, isCompleted)}
                   {...interactiveProps(step.value)}
                 >
-                  <div className="flex items-center gap-5 min-w-[170px]">
-                    <span className="text-4xl font-light text-gray-900">
+                  <div className="flex items-center gap-4 min-w-[170px] shrink-0">
+                    <span
+                      className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors duration-300 border",
+                        isActive
+                          ? "bg-black text-white border-black"
+                          : "bg-[#f0f0f0] text-gray-800 border-[#dcdcdc]"
+                      )}
+                    >
                       {step.value}
                     </span>
                     <div className="leading-tight">
-                      <div className="text-[13px] font-medium text-gray-500">
+                      <div className="text-[12px] font-semibold text-gray-500 tracking-[0.18em] uppercase">
                         {step.subtitle}
                       </div>
-                      <div className="text-[22px] font-semibold tracking-[0.28em] text-gray-900 uppercase">
+                      <div className="text-lg md:text-xl font-semibold text-gray-900 uppercase">
                         {step.title}
                       </div>
                     </div>
@@ -323,17 +299,21 @@ export default function CustomizationSteps({
                     )}
                     <div
                       className={cn(
-                        "w-8 h-8 rounded-full border flex items-center justify-center bg-white transition-all duration-300",
-                        isCompleted || isActive
-                          ? "border-[#63b746] text-[#63b746]"
-                          : "border-gray-300 text-transparent"
+                        "w-9 h-9 rounded-full border flex items-center justify-center bg-white transition-all duration-300 shadow-sm",
+                        isCompleted
+                          ? "border-[#11845b] bg-[#11845b] text-white"
+                          : isActive
+                          ? "border-black bg-black text-white"
+                          : "border-[#dcdcdc] text-transparent"
                       )}
                     >
                       <Check
                         strokeWidth={2}
                         className={cn(
-                          "w-4 h-4 transition-opacity",
-                          isCompleted || isActive ? "opacity-100" : "opacity-0"
+                          "w-4 h-4 transition-all",
+                          isCompleted || isActive
+                            ? "opacity-100 scale-100"
+                            : "opacity-0 scale-90"
                         )}
                       />
                     </div>

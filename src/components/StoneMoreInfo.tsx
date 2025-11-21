@@ -27,6 +27,10 @@ export default function StoneMoreInfo({
   const [stoneLoading, setStoneLoading] = useState(false);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
+
+  useEffect(() => {
     const loadStone = async () => {
       if (detailSource !== 1 || !stone) {
         setStoneDetail(null);
@@ -70,7 +74,7 @@ export default function StoneMoreInfo({
       </div>
       <ProductSection
         isStepOneDetails={isStepOneDetails}
-        onPrimaryAction={isStepOneDetails ? onAddSetting : undefined}
+        onPrimaryAction={onAddSetting}
         primaryActionLabel={isStepOneDetails ? "Add Setting" : undefined}
         showBuySettingButton={!isStepOneDetails}
         stoneDetail={stoneDetail}

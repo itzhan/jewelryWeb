@@ -12,6 +12,7 @@ interface DiamondGridProps {
   // 点击「Add pendant」时，将当前 diamond 信息回调给上层，便于后续步骤使用
   onAddPendant?: (stone: BackendStoneItem) => void;
   shapeIconSvgMap?: Map<string, string | undefined>;
+  selectedStoneId?: number | null;
 }
 const shapeLabelMap: Record<string, string> = {
   round: "Round",
@@ -38,6 +39,7 @@ export default function DiamondGrid({
   onMoreInfo,
   onAddPendant,
   shapeIconSvgMap,
+  selectedStoneId,
 }: DiamondGridProps) {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [stones, setStones] = useState<BackendStoneItem[]>([]);
@@ -96,7 +98,13 @@ export default function DiamondGrid({
         return (
           <div
             key={diamond.id}
-            className="group relative flex cursor-pointer flex-col overflow-visible rounded-[1.75rem] border border-gray-100 bg-white/95 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-[border-radius,_transform,_box-shadow] duration-300 hover:-translate-y-2 hover:shadow-[0_25px_60px_rgba(15,23,42,0.18)] hover:z-20 hover:rounded-bl-none hover:rounded-br-none"
+            className={`group relative flex cursor-pointer flex-col overflow-visible rounded-[1.75rem] border border-gray-100 bg-white/95 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-[border-radius,_transform,_box-shadow,_border-color] duration-300 hover:-translate-y-2 hover:shadow-[0_25px_60px_rgba(15,23,42,0.18)] hover:z-20 hover:rounded-bl-none hover:rounded-br-none`}
+            onClick={() =>
+              onMoreInfo?.({
+                ...diamond,
+                shapeIconSvg: diamond.shapeIconSvg ?? iconSvgFromShapes,
+              })
+            }
           >
             <div className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#e8f0fb] via-white to-[#dfe9ff] p-4 group-hover:rounded-bl-none group-hover:rounded-br-none">
               <div className="absolute right-4 top-4 z-10">

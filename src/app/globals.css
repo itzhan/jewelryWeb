@@ -127,6 +127,10 @@
   .animate-modal-pop {
     animation: modalPop 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
+
+  .view-transition-wrapper {
+    animation: viewFadeSlide 320ms ease;
+  }
 }
 
 @keyframes overlayFade {
@@ -148,6 +152,17 @@
     transform: translateY(-6px) scale(1.02);
   }
   100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes viewFadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.99);
+  }
+  to {
+    opacity: 1;
     transform: translateY(0) scale(1);
   }
 }

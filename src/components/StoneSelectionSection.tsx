@@ -316,6 +316,21 @@ const SpinnerButtons = ({ onIncrease, onDecrease }: SpinnerProps) => (
 
 interface StoneSelectionSectionProps {
   selectedProduct: StepOneProduct | null;
+  selectedStone?: BackendStoneItem | null;
+  selectedShapeValue?: string;
+  onSelectedShapeChange?: (shape: string) => void;
+  filtersValue?: StoneFilters;
+  onFiltersChange?: (filters: StoneFilters) => void;
+  rangeSelectionsValue?: {
+    color: number[];
+    clarity: number[];
+    cut: number[];
+  };
+  onRangeSelectionsChange?: (ranges: {
+    color: number[];
+    clarity: number[];
+    cut: number[];
+  }) => void;
   onMoreInfo?: (stone: BackendStoneItem) => void;
   // 点击「Add pendant」时，把当前石头对象回传给上层，便于步骤三展示真实配置
   onAddPendant?: (stone: BackendStoneItem) => void;
@@ -323,6 +338,13 @@ interface StoneSelectionSectionProps {
 
 export default function StoneSelectionSection({
   selectedProduct,
+  selectedStone,
+  selectedShapeValue,
+  onSelectedShapeChange,
+  filtersValue,
+  onFiltersChange,
+  rangeSelectionsValue,
+  onRangeSelectionsChange,
   onMoreInfo,
   onAddPendant,
 }: StoneSelectionSectionProps) {
@@ -330,15 +352,80 @@ export default function StoneSelectionSection({
   const [backendOptions, setBackendOptions] = useState<StoneFiltersDto | null>(
     null
   );
-  const [selectedShape, setSelectedShape] = useState<string>("Heart");
-  const [filters, setFilters] = useState<StoneFilters>(() =>
-    createDefaultFilters()
+  const [selectedShape, setSelectedShape] = useState<string>(
+    selectedShapeValue ?? "Heart"
   );
-  const [rangeSelections, setRangeSelections] = useState(() => ({
-    color: createInitialRange(defaultColorOptions.length),
-    clarity: createInitialRange(defaultClarityOptions.length),
-    cut: createInitialRange(defaultCutOptions.length),
-  }));
+  const [filters, setFilters] = useState<StoneFilters>(() =>
+    filtersValue ?? createDefaultFilters()
+  );
+  const [rangeSelections, setRangeSelections] = useState(() =>
+    rangeSelectionsValue ?? {
+      color: createInitialRange(defaultColorOptions.length),
+      clarity: createInitialRange(defaultClarityOptions.length),
+      cut: createInitialRange(defaultCutOptions.length),
+    }
+  );
+
+  const syncJsonEqual = (a: unknown, b: unknown) =>
+    JSON.stringify(a) === JSON.stringify(b);
+
+  const updateSelectedShape = (
+    shape: string,
+    options?: { notifyParent?: boolean }
+  ) => {
+    setSelectedShape(shape);
+    if (options?.notifyParent) {
+      // 避免渲染期同步触发父组件 setState，使用微任务延迟
+      Promise.resolve().then(() => onSelectedShapeChange?.(shape));
+    }
+  };
+
+  const updateFiltersState = (
+    next: StoneFilters | ((prev: StoneFilters) => StoneFilters)
+  ) => {
+    setFilters((prev) => {
+      const resolved = typeof next === "function" ? next(prev) : next;
+      onFiltersChange?.(resolved);
+      return resolved;
+    });
+  };
+
+  const updateRangeSelectionsState = (
+    next:
+      | { color: number[]; clarity: number[]; cut: number[] }
+      | ((prev: { color: number[]; clarity: number[]; cut: number[] }) => {
+          color: number[];
+          clarity: number[];
+          cut: number[];
+        })
+  ) => {
+    setRangeSelections((prev) => {
+      const resolved = typeof next === "function" ? next(prev) : next;
+      onRangeSelectionsChange?.(resolved);
+      return resolved;
+    });
+  };
+
+  useEffect(() => {
+    if (selectedShapeValue && selectedShapeValue !== selectedShape) {
+      setSelectedShape(selectedShapeValue);
+    }
+  }, [selectedShapeValue, selectedShape]);
+
+  useEffect(() => {
+    if (filtersValue && !syncJsonEqual(filtersValue, filters)) {
+      setFilters(filtersValue);
+    }
+  }, [filtersValue, filters]);
+
+  useEffect(() => {
+    if (
+      rangeSelectionsValue &&
+      !syncJsonEqual(rangeSelectionsValue, rangeSelections)
+    ) {
+      setRangeSelections(rangeSelectionsValue);
+    }
+  }, [rangeSelectionsValue, rangeSelections]);
 
   const shapeIconSvgMap = useMemo(() => {
     const map = new Map<string, string | undefined>();
@@ -360,18 +447,35 @@ export default function StoneSelectionSection({
         const colorCodes = data.colors.map((c) => c.code);
         const cutCodes = data.cuts.map((c) => c.code);
 
-        setFilters(
-          createDefaultFilters({ clarityCodes, colorCodes, cutCodes })
-        );
-        setRangeSelections({
-          color: createInitialRange(colorCodes.length),
-          clarity: createInitialRange(clarityCodes.length),
-          cut: createInitialRange(cutCodes.length),
-        });
+        if (!filtersValue) {
+          updateFiltersState(
+            createDefaultFilters({ clarityCodes, colorCodes, cutCodes })
+          );
+        }
+        if (!rangeSelectionsValue) {
+          updateRangeSelectionsState({
+            color: createInitialRange(colorCodes.length),
+            clarity: createInitialRange(clarityCodes.length),
+            cut: createInitialRange(cutCodes.length),
+          });
+        }
 
         // 选中一个后端实际存在的形状名称
         if (data.shapes.length > 0) {
-          setSelectedShape(data.shapes[0].label);
+          const nextShape =
+            selectedShapeValue ??
+            (selectedStone
+              ? data.shapes.find(
+                  (shape) =>
+                    shape.code?.toLowerCase() ===
+                      selectedStone.shape.toLowerCase() ||
+                    shape.label.toLowerCase() ===
+                      selectedStone.shape.toLowerCase()
+                )?.label
+              : data.shapes[0].label);
+          if (nextShape) {
+            updateSelectedShape(nextShape);
+          }
         }
       } catch (e) {
         console.error("加载石头筛选枚举失败", e);
@@ -379,7 +483,23 @@ export default function StoneSelectionSection({
     };
 
     loadFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!backendOptions || !selectedStone) return;
+
+    const normalizedShape = selectedStone.shape.toLowerCase();
+    const matchedShape = backendOptions.shapes.find(
+      (shape) =>
+        shape.code?.toLowerCase() === normalizedShape ||
+        shape.label.toLowerCase() === normalizedShape
+    );
+
+    if (matchedShape?.label) {
+      updateSelectedShape(matchedShape.label);
+    }
+  }, [backendOptions, selectedStone?.shape]);
 
   const colorCodes = useMemo(
     () => backendOptions?.colors.map((c) => c.code) ?? defaultColorOptions,
@@ -412,7 +532,7 @@ export default function StoneSelectionSection({
     }, [backendOptions]);
 
   const toggleCertificate = (value: string) => {
-    setFilters((prev) => {
+    updateFiltersState((prev) => {
       const exists = prev.certificate.includes(value);
       const nextValues = exists
         ? prev.certificate.filter((item) => item !== value)
@@ -422,7 +542,7 @@ export default function StoneSelectionSection({
   };
 
   const handleBandSelection = (type: BandType, index: number) => {
-    setRangeSelections((prev) => {
+    updateRangeSelectionsState((prev) => {
       const current = prev[type];
       let nextRange: RangeSelection;
 
@@ -450,13 +570,16 @@ export default function StoneSelectionSection({
         normalizedEnd + 1
       );
 
-      setFilters((prevFilters) => ({ ...prevFilters, [type]: selectedValues }));
+      updateFiltersState((prevFilters) => ({
+        ...prevFilters,
+        [type]: selectedValues,
+      }));
       return updatedSelections;
     });
   };
 
   const handleCaratChange = (value: number[]) => {
-    setFilters((prev) => ({
+    updateFiltersState((prev) => ({
       ...prev,
       carat: {
         min: Number(value[0].toFixed(1)),
@@ -469,7 +592,7 @@ export default function StoneSelectionSection({
     field: "min" | "max",
     computeValue: (current: { min: number; max: number }) => number
   ) => {
-    setFilters((prev) => {
+    updateFiltersState((prev) => {
       const nextBudget = { ...prev.budget };
       const candidate = Math.max(0, computeValue(nextBudget));
 
@@ -499,16 +622,18 @@ export default function StoneSelectionSection({
 
   const handleReset = () => {
     if (backendOptions?.shapes?.length) {
-      setSelectedShape(backendOptions.shapes[0].label);
+      updateSelectedShape(backendOptions.shapes[0].label, { notifyParent: true });
     } else {
-      setSelectedShape("Heart");
+      updateSelectedShape("Heart", { notifyParent: true });
     }
 
     const clarityCodes = backendOptions?.clarities.map((c) => c.code);
     const colorCodes = backendOptions?.colors.map((c) => c.code);
     const cutCodes = backendOptions?.cuts.map((c) => c.code as StoneCutGrade);
-    setFilters(createDefaultFilters({ clarityCodes, colorCodes, cutCodes }));
-    setRangeSelections({
+    updateFiltersState(
+      createDefaultFilters({ clarityCodes, colorCodes, cutCodes })
+    );
+    updateRangeSelectionsState({
       color: createInitialRange(
         colorCodes?.length ?? defaultColorOptions.length
       ),
@@ -527,16 +652,6 @@ export default function StoneSelectionSection({
             Use the filters below to design your perfect engagement ring
           </p>
         </div>
-        {selectedProduct && (
-          <div className="mt-6 text-center text-sm text-gray-600">
-            当前正在为{" "}
-            <span className="font-medium text-gray-900">
-              {selectedProduct.name}
-            </span>{" "}
-            定制石头 · 价格 {selectedProduct.price}
-          </div>
-        )}
-
         <div className="mt-10">
           <div className="flex flex-wrap items-center justify-center gap-4 overflow-x-auto pb-2 text-center">
             {shapes.map((shape) => {
@@ -546,7 +661,7 @@ export default function StoneSelectionSection({
                 <button
                   key={shape.name}
                   type="button"
-                  onClick={() => setSelectedShape(shape.name)}
+                  onClick={() => updateSelectedShape(shape.name, { notifyParent: true })}
                   className={`flex h-28 w-24 flex-col items-center justify-center rounded-2xl border-2 transition-all ${
                     isSelected
                       ? "border-black shadow-[0_12px_24px_rgba(0,0,0,0.12)]"
@@ -554,13 +669,11 @@ export default function StoneSelectionSection({
                   }`}
                 >
                   <span className="mb-2 text-gray-700">
-                    {iconSvg ? (
+                    {iconSvg && (
                       <span
                         className="inline-block h-12 w-12"
                         dangerouslySetInnerHTML={{ __html: iconSvg }}
                       />
-                    ) : (
-                      shape.icon
                     )}
                   </span>
                   <span className="text-xs font-medium text-gray-600">
@@ -978,6 +1091,7 @@ export default function StoneSelectionSection({
             onMoreInfo={onMoreInfo}
             onAddPendant={onAddPendant}
             shapeIconSvgMap={shapeIconSvgMap}
+            selectedStoneId={selectedStone?.id}
           />
         </div>
       </div>

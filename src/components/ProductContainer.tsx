@@ -272,28 +272,12 @@ export default function ProductContainer({
               <div className="flex items-center justify-between pb-4 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                    {stoneShapeIcon ? (
-                      <div
-                        className="w-8 h-8"
-                        dangerouslySetInnerHTML={{ __html: stoneShapeIcon }}
-                      />
-                    ) : (
-                      <svg
-                        width="28"
-                        height="28"
-                        viewBox="0 0 28 28"
-                        fill="none"
-                      >
-                        <rect
-                          x="8"
-                          y="8"
-                          width="12"
-                          height="12"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
+                      {stoneShapeIcon && (
+                        <div
+                          className="w-8 h-8"
+                          dangerouslySetInnerHTML={{ __html: stoneShapeIcon }}
                         />
-                      </svg>
-                    )}
+                      )}
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">{stone.shape}</h3>
@@ -491,23 +475,11 @@ export default function ProductContainer({
                     {stone.lengthMm?.toFixed(1)}x{stone.widthMm?.toFixed(1)}
                   </p>
                   <div className="flex items-center gap-2 text-gray-500">
-                    {stone.shapeIconSvg ? (
+                    {stone.shapeIconSvg && (
                       <div
                         className="h-5 w-5"
                         dangerouslySetInnerHTML={{ __html: stone.shapeIconSvg }}
                       />
-                    ) : (
-                      <svg
-                        className="h-5 w-5"
-                        viewBox="0 0 40 40"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.2"
-                      >
-                        <rect x="8" y="12" width="24" height="16" rx="4" />
-                        <path d="M8 28l7-6 7 6" />
-                        <line x1="8" y1="28" x2="16" y2="28" />
-                      </svg>
                     )}
                     <span className="text-xs font-medium">
                       Ratio: {stone.ratio?.toFixed(2)}
