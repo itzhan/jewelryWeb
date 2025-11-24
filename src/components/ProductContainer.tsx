@@ -472,7 +472,7 @@ export default function ProductContainer({
                     <span className="text-cyan-500">dimensions (mm)</span>
                   </div>
                   <p className="text-3xl font-semibold text-gray-900">
-                    {stone.lengthMm?.toFixed(1)}x{stone.widthMm?.toFixed(1)}
+                    {stone.externalM1?.toFixed(1) || "-"}x{stone.externalM2?.toFixed(1) || "-"}
                   </p>
                   <div className="flex items-center gap-2 text-gray-500">
                     {stone.shapeIconSvg && (

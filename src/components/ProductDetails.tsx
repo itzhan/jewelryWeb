@@ -121,10 +121,10 @@ const getDiamondAccordionContent = (
 
           <span className="text-gray-500">L/W (mm)</span>
           <span className="font-semibold text-gray-900">
-            {stoneDetail?.lengthMm && stoneDetail?.widthMm
-              ? `${stoneDetail.lengthMm.toFixed(
+            {stoneDetail?.externalM1 && stoneDetail?.externalM2
+              ? `${stoneDetail.externalM1.toFixed(
                   2
-                )}/${stoneDetail.widthMm.toFixed(2)}`
+                )}/${stoneDetail.externalM2.toFixed(2)}`
               : "-"}
           </span>
 
@@ -140,7 +140,7 @@ const getDiamondAccordionContent = (
 
           <span className="text-gray-500">Depth (mm)</span>
           <span className="font-semibold text-gray-900">
-            {stoneDetail?.depthMm?.toFixed(2) || "-"}
+            {stoneDetail?.externalM3?.toFixed(2) || "-"}
           </span>
         </div>
 
@@ -237,6 +237,7 @@ export default function ProductDetails({
     const loadFilters = async () => {
       try {
         setLoading(true);
+
         const [shapesData, materialsData] = await Promise.all([
           fetchStoneFilters(),
           fetchMaterials(),
@@ -244,7 +245,6 @@ export default function ProductDetails({
         setShapes(shapesData.shapes || []);
         setMaterials(materialsData || []);
 
-        // 设置默认选中项
         if (shapesData.shapes?.length > 0 && !selectedShape) {
           setSelectedShape(shapesData.shapes[0].label);
         }
@@ -261,7 +261,9 @@ export default function ProductDetails({
     loadFilters();
   }, [isStepOneVariant]);
 
-  // 如果有石头数据，使用真实数据；否则使用默认数据
+  const formatDimension = (value?: number) =>
+    value !== undefined && value !== null ? value.toFixed(2) : "-";
+
   const actualStats = stoneDetail
     ? [
         { label: "Carat", value: stoneDetail.carat.toFixed(2) },
@@ -271,14 +273,14 @@ export default function ProductDetails({
         { label: "Ratio", value: stoneDetail.ratio?.toFixed(2) || "-" },
         {
           label: "L/W (mm)",
-          value: `${stoneDetail.lengthMm?.toFixed(2) || "-"}/${
-            stoneDetail.widthMm?.toFixed(2) || "-"
-          }`,
+          value: `${formatDimension(stoneDetail.externalM1)}/${formatDimension(
+            stoneDetail.externalM2
+          )}`,
         },
       ]
     : stepOneStats;
 
-  const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
+const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
   const primaryLabel = primaryActionLabel ?? "Add Center Stone";
 
   const primaryShapes = [

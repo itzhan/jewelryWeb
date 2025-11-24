@@ -107,6 +107,17 @@ export default function ProductSection({
               } stone.`
             : "Scroll to explore every angle of The Amelia setting."}
         </p>
+        {isStepOneDetails && stoneDetail?.externalVideoUrl && (
+          <div className="text-center text-sm font-semibold text-indigo-600">
+            <a
+              href={stoneDetail.externalVideoUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Watch stone video
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Product Details */}

@@ -88,7 +88,6 @@
 - `cutGrade: StoneCutGrade`（ManyToOne）
 - `certificate?: StoneCertificate`（ManyToOne, nullable）
 - `ratio: number`
-- `lengthMm?: number`
 - `widthMm?: number`
 - `depthMm?: number`
 - `price: number`
@@ -422,4 +421,3 @@ pnpm add @nestjs/config
 - 当前「选石头 + 选产品」的组合：
   - 仅在前端状态（React state）里拼接，不入库；
   - 未来要做购物车 / 支付时，可以在此设计基础上新加“定制组合 + 订单”相关表和接口。
-

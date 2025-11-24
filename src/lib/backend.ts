@@ -124,13 +124,46 @@ export interface BackendStoneItem {
   ratio: number;
   price: number;
   currency: string;
-  lengthMm?: number;
-  widthMm?: number;
-  depthMm?: number;
+  externalId?: number;
+  externalDRef?: string;
+  externalReportNo?: string;
+  externalCertNo?: string;
+  externalCertType?: string;
+  externalPolish?: string;
+  externalSymmetry?: string;
+  externalFluorescence?: string;
+  externalDepthPercent?: number;
+  externalTablePercent?: number;
+  externalM1?: number;
+  externalM2?: number;
+  externalM3?: number;
+  externalRate?: number;
+  externalDiscount?: number;
+  externalLocation?: string;
+  externalNatts?: string;
+  externalMilky?: string;
+  externalEyeClean?: string;
+  externalBrowness?: string;
+  externalIsBuy?: boolean;
+  externalIsSpecialOffer?: boolean;
+  externalIsAuction?: boolean;
+  externalRap?: number;
+  externalUpdateTime?: string;
+  externalVideoUrl?: string;
+  externalDaylightUrl?: string;
+  externalBt?: string;
+  externalBc?: string;
+  externalWt?: string;
+  externalWc?: string;
+  externalSupplement1?: string;
+  externalSupplement10?: string;
+  externalSupplement11?: string;
+  externalSupplement12?: string;
+  externalSupplement13?: string;
   primaryImageUrl?: string;
-  // 可选的形状图标 SVG，用于展示 Round/Oval 等图标
   shapeIconSvg?: string;
 }
+
 
 interface StonesListResponse {
   data: BackendStoneItem[];
