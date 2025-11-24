@@ -49,7 +49,7 @@ export default function StoneMoreInfo({
     };
 
     loadStone();
-  }, [detailSource, stone?.id]);
+  }, [detailSource, stone]);
 
   const stoneImages = stoneDetail?.images ?? [];
 

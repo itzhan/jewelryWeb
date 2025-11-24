@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import CustomizationSteps from "@/components/CustomizationSteps";
-import StoneSelectionSection from "@/components/StoneSelectionSection";
+import StoneSelectionSection, {
+  type RangeSelections,
+} from "@/components/StoneSelectionSection";
 import ProductContainer from "@/components/ProductContainer";
 import StepOneLanding, { StepOneProduct } from "@/components/StepOneLanding";
 import StoneMoreInfo from "@/components/StoneMoreInfo";
@@ -23,12 +25,6 @@ const choiceProductIndex: Record<SettingChoice, number> = {
 
 type StepNumber = 1 | 2 | 3;
 type StepIntent = "select" | "change" | "view" | "card" | undefined;
-type RangeSelections = {
-  color: number[];
-  clarity: number[];
-  cut: number[];
-};
-
 export default function StepExperience() {
   const searchParams = useSearchParams();
   const router = useRouter();

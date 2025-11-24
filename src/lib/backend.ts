@@ -20,7 +20,7 @@ export function resolveBackendImageUrl(imagePath: string | null | undefined) {
 
 async function apiGet<T>(
   path: string,
-  params?: Record<string, any>
+  params?: Record<string, unknown>
 ): Promise<T> {
   const url = new URL(path, BACKEND_BASE_URL);
   if (params) {
@@ -177,6 +177,7 @@ interface StonesListResponse {
 }
 
 export interface StonesQueryParams {
+  [key: string]: unknown;
   page?: number;
   pageSize?: number;
   shape?: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import DiamondGrid from "@/components/DiamondGrid";
 import { Slider } from "@/components/ui/slider";
 import type { StoneFilters, StoneCutGrade } from "@/types/stone-filters";
@@ -191,7 +191,7 @@ const shapes = [
   },
 ];
 
-interface RangeSelection {
+export interface RangeSelection {
   start: number;
   end: number;
   anchor: number | null;
@@ -202,6 +202,12 @@ const createInitialRange = (length: number): RangeSelection => ({
   end: length - 1,
   anchor: null,
 });
+
+export type RangeSelections = {
+  color: RangeSelection;
+  clarity: RangeSelection;
+  cut: RangeSelection;
+};
 
 type BandType = "color" | "clarity" | "cut";
 
@@ -321,16 +327,8 @@ interface StoneSelectionSectionProps {
   onSelectedShapeChange?: (shape: string) => void;
   filtersValue?: StoneFilters;
   onFiltersChange?: (filters: StoneFilters) => void;
-  rangeSelectionsValue?: {
-    color: number[];
-    clarity: number[];
-    cut: number[];
-  };
-  onRangeSelectionsChange?: (ranges: {
-    color: number[];
-    clarity: number[];
-    cut: number[];
-  }) => void;
+  rangeSelectionsValue?: RangeSelections;
+  onRangeSelectionsChange?: (ranges: RangeSelections) => void;
   onMoreInfo?: (stone: BackendStoneItem) => void;
   // 点击「Add pendant」时，把当前石头对象回传给上层，便于步骤三展示真实配置
   onAddPendant?: (stone: BackendStoneItem) => void;
@@ -358,53 +356,55 @@ export default function StoneSelectionSection({
   const [filters, setFilters] = useState<StoneFilters>(() =>
     filtersValue ?? createDefaultFilters()
   );
-  const [rangeSelections, setRangeSelections] = useState(() =>
-    rangeSelectionsValue ?? {
-      color: createInitialRange(defaultColorOptions.length),
-      clarity: createInitialRange(defaultClarityOptions.length),
-      cut: createInitialRange(defaultCutOptions.length),
-    }
+  const [rangeSelections, setRangeSelections] = useState<RangeSelections>(
+    () =>
+      rangeSelectionsValue ?? {
+        color: createInitialRange(defaultColorOptions.length),
+        clarity: createInitialRange(defaultClarityOptions.length),
+        cut: createInitialRange(defaultCutOptions.length),
+      }
   );
+
+  const selectedStoneShape = selectedStone?.shape;
 
   const syncJsonEqual = (a: unknown, b: unknown) =>
     JSON.stringify(a) === JSON.stringify(b);
 
-  const updateSelectedShape = (
-    shape: string,
-    options?: { notifyParent?: boolean }
-  ) => {
-    setSelectedShape(shape);
-    if (options?.notifyParent) {
-      // 避免渲染期同步触发父组件 setState，使用微任务延迟
-      Promise.resolve().then(() => onSelectedShapeChange?.(shape));
-    }
-  };
+  const updateSelectedShape = useCallback(
+    (shape: string, options?: { notifyParent?: boolean }) => {
+      setSelectedShape(shape);
+      if (options?.notifyParent) {
+        // 避免渲染期同步触发父组件 setState，使用微任务延迟
+        Promise.resolve().then(() => onSelectedShapeChange?.(shape));
+      }
+    },
+    [onSelectedShapeChange]
+  );
 
-  const updateFiltersState = (
-    next: StoneFilters | ((prev: StoneFilters) => StoneFilters)
-  ) => {
-    setFilters((prev) => {
-      const resolved = typeof next === "function" ? next(prev) : next;
-      onFiltersChange?.(resolved);
-      return resolved;
-    });
-  };
+  const updateFiltersState = useCallback(
+    (next: StoneFilters | ((prev: StoneFilters) => StoneFilters)) => {
+      setFilters((prev) => {
+        const resolved = typeof next === "function" ? next(prev) : next;
+        onFiltersChange?.(resolved);
+        return resolved;
+      });
+    },
+    [onFiltersChange]
+  );
 
-  const updateRangeSelectionsState = (
-    next:
-      | { color: number[]; clarity: number[]; cut: number[] }
-      | ((prev: { color: number[]; clarity: number[]; cut: number[] }) => {
-          color: number[];
-          clarity: number[];
-          cut: number[];
-        })
-  ) => {
-    setRangeSelections((prev) => {
-      const resolved = typeof next === "function" ? next(prev) : next;
-      onRangeSelectionsChange?.(resolved);
-      return resolved;
-    });
-  };
+  const updateRangeSelectionsState = useCallback(
+    (next: RangeSelections | ((prev: RangeSelections) => RangeSelections)) => {
+      setRangeSelections((prev) => {
+        const resolved =
+          typeof next === "function"
+            ? (next as (prev: RangeSelections) => RangeSelections)(prev)
+            : next;
+        onRangeSelectionsChange?.(resolved);
+        return resolved;
+      });
+    },
+    [onRangeSelectionsChange]
+  );
 
   useEffect(() => {
     if (selectedShapeValue && selectedShapeValue !== selectedShape) {
@@ -462,15 +462,14 @@ export default function StoneSelectionSection({
 
         // 选中一个后端实际存在的形状名称
         if (data.shapes.length > 0) {
+          const normalizedStoneShape = selectedStoneShape?.toLowerCase();
           const nextShape =
             selectedShapeValue ??
-            (selectedStone
+            (normalizedStoneShape
               ? data.shapes.find(
                   (shape) =>
-                    shape.code?.toLowerCase() ===
-                      selectedStone.shape.toLowerCase() ||
-                    shape.label.toLowerCase() ===
-                      selectedStone.shape.toLowerCase()
+                    shape.code?.toLowerCase() === normalizedStoneShape ||
+                    shape.label.toLowerCase() === normalizedStoneShape
                 )?.label
               : data.shapes[0].label);
           if (nextShape) {
@@ -483,8 +482,15 @@ export default function StoneSelectionSection({
     };
 
     loadFilters();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    selectedShapeValue,
+    selectedStoneShape,
+    filtersValue,
+    rangeSelectionsValue,
+    updateFiltersState,
+    updateRangeSelectionsState,
+    updateSelectedShape,
+  ]);
 
   useEffect(() => {
     if (!backendOptions || !selectedStone) return;
@@ -499,7 +505,7 @@ export default function StoneSelectionSection({
     if (matchedShape?.label) {
       updateSelectedShape(matchedShape.label);
     }
-  }, [backendOptions, selectedStone?.shape]);
+  }, [backendOptions, selectedStone, updateSelectedShape]);
 
   const colorCodes = useMemo(
     () => backendOptions?.colors.map((c) => c.code) ?? defaultColorOptions,

@@ -8,6 +8,7 @@ import Newsletter from '@/components/Newsletter';
 import Guarantees from '@/components/Guarantees';
 import Footer from '@/components/Footer';
 import StepExperience from '@/components/StepExperience';
+import { Suspense } from 'react';
 
 export default function Home() {
   return (
@@ -18,7 +19,9 @@ export default function Home() {
       <div className="page-width py-8">
         <Breadcrumb />
       </div>
-      <StepExperience />
+      <Suspense>
+        <StepExperience />
+      </Suspense>
       <Reviews />
       <OurCouples />
       <Newsletter />

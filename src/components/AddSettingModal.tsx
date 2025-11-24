@@ -106,7 +106,6 @@ export default function AddSettingModal({ open, onClose, onSelect }: AddSettingM
               type="button"
               className="group relative flex min-h-[200px] flex-col items-center justify-center gap-4 rounded-[28px] border border-gray-200/80 bg-white/90 p-5 text-center shadow-[0_18px_50px_rgba(15,23,42,0.15)] transition duration-300 ease-out hover:border-black/70 hover:shadow-[0_28px_60px_rgba(15,23,42,0.25)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-black"
               onClick={() => onSelect(option.id, option.iconSvg)}
-              className="group relative flex min-h-[200px] flex-col items-center justify-center gap-4 rounded-[28px] border border-gray-200/80 bg-white/90 p-5 text-center shadow-[0_18px_50px_rgba(15,23,42,0.15)] transition duration-300 ease-out hover:border-black/70 hover:shadow-[0_28px_60px_rgba(15,23,42,0.25)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-black"
             >
               <div className="flex flex-col items-center gap-3">
                 {option.iconSvg ? (

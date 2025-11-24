@@ -259,7 +259,7 @@ export default function ProductDetails({
     };
 
     loadFilters();
-  }, [isStepOneVariant]);
+  }, [isStepOneVariant, selectedShape, selectedMetal]);
 
   const formatDimension = (value?: number) =>
     value !== undefined && value !== null ? value.toFixed(2) : "-";
@@ -881,7 +881,7 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
         {accordionOrder.map((key) => {
           const item = (
             isStepOneVariant
-              ? getDiamondAccordionContent(stoneDetail)
+          ? getDiamondAccordionContent(stoneDetail ?? null)
               : accordionContent
           )[key];
           const isOpen = openSections[key];

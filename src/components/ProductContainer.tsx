@@ -176,7 +176,7 @@ export default function ProductContainer({
           </svg>
         );
     }
-  }, [settingType]);
+  }, [settingType, categoryIconSvg]);
 
   const toggleSection = (section: AccordionSection) => {
     setExpandedSection((prev) => (prev === section ? null : section));
