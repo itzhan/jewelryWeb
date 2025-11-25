@@ -188,12 +188,10 @@ export default function ProductContainer({
         {/* Image Gallery Section */}
         <div className="relative lg:sticky lg:top-10 self-start space-y-4 pb-16">
           <div className="grid grid-cols-2 gap-4 rounded-[36px]">
-            {productImages.map((image, index) => (
+            {productImages.slice(0, 4).map((image, index) => (
               <figure
                 key={`${image.alt}-${index}`}
-                className={`relative ${
-                  image.aspect === "portrait" ? "aspect-[3/4]" : "aspect-square"
-                } rounded-[32px] overflow-hidden bg-gray-50 shadow-[0_18px_45px_rgba(15,23,42,0.08)]`}
+                className="relative aspect-square rounded-[32px] overflow-hidden bg-gray-50 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
               >
                 <img
                   src={image.url}

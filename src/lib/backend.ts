@@ -78,7 +78,7 @@ export interface ProductImageDto {
   url: string;
   alt: string;
   badge?: string;
-  aspect: "square" | "portrait";
+  aspect?: "square" | "portrait";
   // 从后端 JSONB 中同步的排序与主图标记，前台按它们决定展示顺序
   sortOrder?: number;
   isPrimary?: boolean;
@@ -190,6 +190,7 @@ export interface StonesQueryParams {
   maxBudget?: number;
   certificate?: string[];
   type?: BackendStoneType;
+  sortBy?: "default" | "price_asc" | "price_desc";
 }
 
 export async function fetchStones(
@@ -202,7 +203,7 @@ export interface StoneImageDto {
   url: string;
   alt: string;
   badge?: string;
-  aspect: "square" | "portrait";
+  aspect?: "square" | "portrait";
   // 从后端 JSONB 中同步的排序与主图标记，前台按它们决定展示顺序
   sortOrder?: number;
   isPrimary?: boolean;

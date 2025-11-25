@@ -145,43 +145,26 @@ const getDiamondAccordionContent = (
         </div>
 
         {/* 右侧证书卡片 */}
-        <div className="w-full sm:max-w-xs rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 p-4 shadow-sm flex flex-col justify-between">
-          <div className="flex items-start justify-between text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-700">
-            <span>
-              {stoneDetail?.type === "lab_grown"
-                ? "Lab Diamond"
-                : "Natural Diamond"}
-            </span>
-            <svg
-              className="h-4 w-4 text-amber-700/70"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-            >
-              <path d="M5 3h8v8" strokeLinecap="round" strokeLinejoin="round" />
-              <path
-                d="M3 11L11 3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-
-          <div className="mt-6 mb-6 flex items-center justify-center">
-            <div className="relative h-24 w-24 rounded-full bg-gradient-to-br from-amber-100 via-amber-200 to-orange-200 flex items-center justify-center shadow">
-              <div className="h-18 w-18 flex items-center justify-center rounded-full border border-amber-300 bg-amber-50 text-xs font-semibold text-gray-800">
-                {stoneDetail?.certificate || "GIA"}
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="text-center text-xs font-medium text-gray-900 underline underline-offset-2"
+        <div className="w-full sm:max-w-xs rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 p-6 shadow-sm flex flex-col items-center justify-center text-center">
+          <img
+            src="https://cdn.shopify.com/oxygen-v2/24658/9071/18525/2591741/build/_assets/kzr-icon-gia-crt-N3UI7WNQ.svg"
+            width="400"
+            height="400"
+            loading="eager"
+            alt="Diamond certificate image"
+            className="w-full aspect-square object-cover max-w-[8rem] mb-4"
+          />
+          <p className="text-[#937D67] text-2xl leading-tight uppercase font-bold">
+            {stoneDetail?.type === "lab_grown" ? "Lab Diamond" : "Natural Diamond"}
+          </p>
+          <a
+            className="cursor-pointer text-gray-600 text-base leading-tight font-medium mt-2 underline"
+            href={`https://www.gia.edu/report-check?reportno=${stoneDetail?.externalReportNo || stoneDetail?.externalCertNo || ""}`}
+            target="_blank"
+            rel="noreferrer"
           >
             View Certificate
-          </button>
+          </a>
         </div>
       </div>
     ),
@@ -215,7 +198,7 @@ export default function ProductDetails({
   stoneDetail,
 }: ProductDetailsProps) {
   const [selectedShape, setSelectedShape] = useState("Round");
-  const [selectedMetal, setSelectedMetal] = useState("Yellow Gold");
+  const [selectedMetalId, setSelectedMetalId] = useState<number | null>(null);
   const [showMoreShapes, setShowMoreShapes] = useState(false);
   const [showMoreMetals, setShowMoreMetals] = useState(false);
   const [openSections, setOpenSections] = useState<
@@ -248,8 +231,8 @@ export default function ProductDetails({
         if (shapesData.shapes?.length > 0 && !selectedShape) {
           setSelectedShape(shapesData.shapes[0].label);
         }
-        if (materialsData?.length > 0 && !selectedMetal) {
-          setSelectedMetal(materialsData[0].name);
+        if (materialsData?.length > 0 && selectedMetalId === null) {
+          setSelectedMetalId(materialsData[0].id);
         }
       } catch (error) {
         console.error("加载筛选器数据失败", error);
@@ -259,7 +242,7 @@ export default function ProductDetails({
     };
 
     loadFilters();
-  }, [isStepOneVariant, selectedShape, selectedMetal]);
+  }, [isStepOneVariant, selectedShape, selectedMetalId]);
 
   const formatDimension = (value?: number) =>
     value !== undefined && value !== null ? value.toFixed(2) : "-";
@@ -438,38 +421,61 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
     }));
   };
 
+  const stoneTitle = stoneDetail
+    ? `${stoneDetail.carat.toFixed(2)}ct ${stoneDetail.shape} ${
+        stoneDetail.type === "lab_grown" ? "Lab-Grown" : "Natural"
+      } Stone`
+    : "The Amelia";
+
+  const stonePrice = stoneDetail
+    ? `${stoneDetail.currency} ${stoneDetail.price.toLocaleString()}`
+    : null;
+
   return (
     <div className="flex flex-col">
-      <h1 className="text-4xl mb-2">The Amelia</h1>
+      <h1 className="text-4xl mb-2">{stoneTitle}</h1>
       {isStepOneVariant ? (
-        <div className="rounded-[32px] border border-gray-200 overflow-hidden mb-6">
-          {statsRows.map((row, rowIndex) => (
-            <div
-              key={`row-${rowIndex}`}
-              className={cn(
-                "grid grid-cols-3 text-center bg-white",
-                rowIndex < statsRows.length - 1 && "border-b border-gray-200"
-              )}
-            >
-              {row.map((stat, statIndex) => (
-                <div
-                  key={stat.label}
-                  className={cn(
-                    "px-6 py-5",
-                    statIndex !== 0 && "border-l border-gray-200"
-                  )}
-                >
-                  <p className="text-xl font-normal text-gray-900 tracking-[0.08em] leading-tight font-[Playfair_Display]">
-                    {stat.value}
-                  </p>
-                  <p className="text-[0.6rem] uppercase tracking-[0.65em] text-gray-500 mt-1">
-                    {stat.label}
-                  </p>
-                </div>
-              ))}
+        <>
+          {stonePrice && (
+            <p className="text-4xl font-bold mb-4">{stonePrice}</p>
+          )}
+          <div className="rounded-[32px] border border-gray-200 overflow-hidden mb-6">
+            {statsRows.map((row, rowIndex) => (
+              <div
+                key={`row-${rowIndex}`}
+                className={cn(
+                  "grid grid-cols-3 text-center bg-white",
+                  rowIndex < statsRows.length - 1 && "border-b border-gray-200"
+                )}
+              >
+                {row.map((stat, statIndex) => (
+                  <div
+                    key={stat.label}
+                    className={cn(
+                      "px-6 py-5",
+                      statIndex !== 0 && "border-l border-gray-200"
+                    )}
+                  >
+                    <p className="text-xl font-normal text-gray-900 tracking-[0.08em] leading-tight font-[Playfair_Display]">
+                      {stat.value}
+                    </p>
+                    <p className="text-[0.6rem] uppercase tracking-[0.65em] text-gray-500 mt-1">
+                      {stat.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          {stoneDetail?.externalSupplement1 && (
+            <div className="mb-6">
+              <h3 className="font-semibold mb-3">Description</h3>
+              <p className="text-gray-700 leading-relaxed">
+                {stoneDetail.externalSupplement1}
+              </p>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       ) : (
         <>
           <p className="text-4xl font-bold mb-4">$670</p>
@@ -558,15 +564,19 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
           {/* Material */}
           <div className="mb-6">
             <h3 className="font-semibold mb-3">
-              Material: <span className="font-normal">{selectedMetal}</span>
+              Material: <span className="font-normal">{materials.find(m => m.id === selectedMetalId)?.name || ""}</span>
             </h3>
             <div className="flex gap-2 flex-wrap">
               {materials.slice(0, 4).map((material) => (
                 <button
                   key={material.id}
-                  onClick={() => setSelectedMetal(material.name)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedMetalId(material.id);
+                  }}
                   className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
-                    selectedMetal === material.name
+                    selectedMetalId === material.id
                       ? "border-black bg-gray-50"
                       : "border-gray-300 hover:border-gray-400"
                   }`}
@@ -600,9 +610,13 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
                 {materials.slice(4).map((material) => (
                   <button
                     key={material.id}
-                    onClick={() => setSelectedMetal(material.name)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedMetalId(material.id);
+                    }}
                     className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
-                      selectedMetal === material.name
+                      selectedMetalId === material.id
                         ? "border-black bg-gray-50"
                         : "border-gray-300 hover:border-gray-400"
                     }`}

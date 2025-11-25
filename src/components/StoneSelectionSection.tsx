@@ -31,165 +31,7 @@ const colorGradientStops = [
 ];
 const BUDGET_STEP = 250;
 
-const shapes = [
-  {
-    name: "Round",
-    icon: (
-      <svg
-        viewBox="0 0 56 56"
-        className="h-12 w-12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <circle cx="28" cy="28" r="18" />
-        <path d="M28 10v36M10 28h36" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    name: "Emerald",
-    icon: (
-      <svg
-        viewBox="0 0 56 56"
-        className="h-12 w-12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <path d="M18 10h20l8 8v20l-8 8H18l-8-8V18z" />
-        <path d="M18 10l8 8h4l8-8" />
-        <path d="M18 46l8-8h4l8 8" />
-      </svg>
-    ),
-  },
-  {
-    name: "Heart",
-    icon: (
-      <svg
-        viewBox="0 0 56 56"
-        className="h-12 w-12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <path
-          d="M28 44s-14-8.5-14-18a8 8 0 0114-5 8 8 0 0114 5c0 9.5-14 18-14 18z"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
-  },
-  {
-    name: "Marquise",
-    icon: (
-      <svg
-        viewBox="0 0 56 56"
-        className="h-12 w-12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <path d="M28 8c10 5 18 10 18 20s-8 15-18 20c-10-5-18-10-18-20S18 13 28 8z" />
-      </svg>
-    ),
-  },
-  {
-    name: "Oval",
-    icon: (
-      <svg
-        viewBox="0 0 56 56"
-        className="h-12 w-12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <ellipse cx="28" cy="28" rx="14" ry="18" />
-        <path d="M14 28h28" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    name: "Pear",
-    icon: (
-      <svg
-        viewBox="0 0 56 56"
-        className="h-12 w-12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <path
-          d="M28 10C34 18 40 22 40 30a12 12 0 01-24 0c0-8 6-12 12-20z"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
-  },
-  {
-    name: "Princess",
-    icon: (
-      <svg
-        viewBox="0 0 56 56"
-        className="h-12 w-12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <rect x="14" y="14" width="28" height="28" />
-        <path d="M14 14l28 28M42 14L14 42" />
-      </svg>
-    ),
-  },
-  {
-    name: "Radiant",
-    icon: (
-      <svg
-        viewBox="0 0 56 56"
-        className="h-12 w-12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <path d="M16 12h24l8 8-2 16-12 12H22L10 36 8 20z" />
-        <path d="M16 12l12 12 12-12" />
-        <path d="M12 24h32" />
-      </svg>
-    ),
-  },
-  {
-    name: "Cushion",
-    icon: (
-      <svg
-        viewBox="0 0 56 56"
-        className="h-12 w-12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <path d="M18 10h20c6 0 8 2 8 8v20c0 6-2 8-8 8H18c-6 0-8-2-8-8V18c0-6 2-8 8-8z" />
-        <path d="M18 10l20 36M38 10L18 46" />
-      </svg>
-    ),
-  },
-  {
-    name: "E. Cushion",
-    icon: (
-      <svg
-        viewBox="0 0 56 56"
-        className="h-12 w-12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <rect x="14" y="10" width="28" height="36" rx="6" />
-        <rect x="20" y="16" width="16" height="24" rx="4" />
-      </svg>
-    ),
-  },
-];
+// Removed local shapes array - now using backend shapes data
 
 export interface RangeSelection {
   start: number;
@@ -364,8 +206,17 @@ export default function StoneSelectionSection({
         cut: createInitialRange(defaultCutOptions.length),
       }
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [sortBy, setSortBy] = useState<"default" | "price_asc" | "price_desc">("default");
+  const pageSize = 8;
 
   const selectedStoneShape = selectedStone?.shape;
+
+  // Reset to page 1 when filters or sorting changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, sortBy, selectedShape]);
 
   const syncJsonEqual = (a: unknown, b: unknown) =>
     JSON.stringify(a) === JSON.stringify(b);
@@ -660,14 +511,14 @@ export default function StoneSelectionSection({
         </div>
         <div className="mt-10">
           <div className="flex flex-wrap items-center justify-center gap-4 overflow-x-auto pb-2 text-center">
-            {shapes.map((shape) => {
-              const isSelected = selectedShape === shape.name;
-              const iconSvg = shapeIconSvgMap.get(shape.name);
+            {backendOptions?.shapes?.map((shape) => {
+              const isSelected = selectedShape === shape.label;
+              const iconSvg = shape.iconSvg;
               return (
                 <button
-                  key={shape.name}
+                  key={shape.code}
                   type="button"
-                  onClick={() => updateSelectedShape(shape.name, { notifyParent: true })}
+                  onClick={() => updateSelectedShape(shape.label, { notifyParent: true })}
                   className={`flex h-28 w-24 flex-col items-center justify-center rounded-2xl border-2 transition-all ${
                     isSelected
                       ? "border-black shadow-[0_12px_24px_rgba(0,0,0,0.12)]"
@@ -683,7 +534,7 @@ export default function StoneSelectionSection({
                     )}
                   </span>
                   <span className="text-xs font-medium text-gray-600">
-                    {shape.name}
+                    {shape.label}
                   </span>
                 </button>
               );
@@ -921,7 +772,6 @@ export default function StoneSelectionSection({
                 <span className="text-lg font-semibold text-gray-900">
                   Carat
                 </span>
-                <span className="text-sm text-gray-400">2 ct — 11 ct</span>
               </div>
               <div className="mt-4">
                 <Slider
@@ -1050,9 +900,13 @@ export default function StoneSelectionSection({
         <div className="mt-12 border-t border-gray-200 pt-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4 text-sm font-medium text-gray-600">
-              <span>Showing 1-14 of 401</span>
+              <span>Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount}</span>
               <div className="flex gap-2">
-                <button className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900">
+                <button
+                  className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
                   <svg
                     className="h-4 w-4"
                     viewBox="0 0 24 24"
@@ -1065,7 +919,11 @@ export default function StoneSelectionSection({
                     <path d="M15 6l-6 6 6 6" />
                   </svg>
                 </button>
-                <button className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900">
+                <button
+                  className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  disabled={currentPage * pageSize >= totalCount}
+                >
                   <svg
                     className="h-4 w-4"
                     viewBox="0 0 24 24"
@@ -1080,11 +938,14 @@ export default function StoneSelectionSection({
                 </button>
               </div>
             </div>
-            <select className="w-full max-w-xs rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-400 focus:border-gray-900 focus:outline-none">
-              <option>Price (low-to-high)</option>
-              <option>Price (high-to-low)</option>
-              <option>Carat (low-to-high)</option>
-              <option>Carat (high-to-low)</option>
+            <select
+              className="w-full max-w-xs rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-400 focus:border-gray-900 focus:outline-none"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            >
+              <option value="default">Default</option>
+              <option value="price_asc">Price (low-to-high)</option>
+              <option value="price_desc">Price (high-to-low)</option>
             </select>
           </div>
         </div>
@@ -1094,8 +955,12 @@ export default function StoneSelectionSection({
             stoneType={stoneType}
             selectedShape={selectedShape}
             filters={filters}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            sortBy={sortBy}
             onMoreInfo={onMoreInfo}
             onAddPendant={onAddPendant}
+            onTotalCountChange={setTotalCount}
             shapeIconSvgMap={shapeIconSvgMap}
             selectedStoneId={selectedStone?.id}
           />

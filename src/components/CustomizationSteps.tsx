@@ -81,7 +81,7 @@ export default function CustomizationSteps({
       ? `${selectedStone.carat.toFixed(2)}ct ${selectedStone.shape} ${
           selectedStone.type === "lab_grown" ? "Lab Sapphire" : "Sapphire"
         }`
-      : "Select your sapphire";
+      : "Choose your stone";
 
     const stonePriceLabel = formatCurrencyAmount(
       stoneCurrency || productCurrency,
@@ -169,7 +169,7 @@ export default function CustomizationSteps({
     };
   };
 
-  const getWrapperClasses = () => "relative flex-1 min-w-[260px]";
+  const getWrapperClasses = () => "relative flex-1 min-w-0";
 
   const getCardClasses = (isActive: boolean, _isCompleted: boolean) =>
     cn(
@@ -252,8 +252,8 @@ export default function CustomizationSteps({
 
   return (
     <div className="steps-configuration-container w-full border border-[#e7e7e7] rounded-[28px] bg-gradient-to-r from-[#f7f7f7] via-white to-[#f7f7f7] px-3 py-4 shadow-[0_18px_36px_rgba(17,24,39,0.08)]">
-      <div className="overflow-x-auto pb-1">
-        <div className="flex min-w-[720px] gap-4">
+      <div className="w-full">
+        <div className="flex gap-4 w-full">
           {steps.map((step) => {
             const isActive = activeStep === step.value;
             const isCompleted = step.value < activeStep;

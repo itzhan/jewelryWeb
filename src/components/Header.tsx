@@ -14,7 +14,7 @@ export default function Header() {
         </div>
 
         <div className="flex-1 flex justify-center">
-          <h1 className="text-2xl tracking-[0.3em]">KEYZAR</h1>
+          <h1 className="text-2xl tracking-[0.3em]">WATSONGEM</h1>
         </div>
 
         <div className="flex items-center gap-6 flex-1 justify-end">

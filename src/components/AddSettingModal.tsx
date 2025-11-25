@@ -27,7 +27,7 @@ const defaultOptions: SettingOption[] = [
   },
   {
     id: "earring",
-    title: "Studs",
+    title: "Earrings",
     icon: <Star className="h-8 w-8 text-rose-500" />,
   },
 ];

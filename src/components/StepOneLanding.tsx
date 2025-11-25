@@ -229,12 +229,13 @@ export default function StepOneLanding({
                       loading="lazy"
                       className="hidden"
                     />
-                    <button
+                    {/* Temporarily commented out - may be re-enabled in the future */}
+                    {/* <button
                       className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
                       onClick={(event) => event.stopPropagation()}
                     >
                       <Heart className="h-5 w-5 text-gray-600" />
-                    </button>
+                    </button> */}
                     <div className="absolute left-4 top-4 rounded-full border border-black bg-white px-3 py-1 text-[0.65rem] uppercase tracking-[0.4em] text-black opacity-0 transition-all duration-300 -translate-x-6 group-hover:translate-x-0 group-hover:opacity-100">
                       Customizable
                     </div>

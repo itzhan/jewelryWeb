@@ -8,9 +8,13 @@ interface DiamondGridProps {
   stoneType: "natural" | "labGrown";
   selectedShape: string;
   filters: StoneFilters;
+  currentPage: number;
+  pageSize: number;
+  sortBy: "default" | "price_asc" | "price_desc";
   onMoreInfo?: (stone: BackendStoneItem) => void;
   // 点击「Add pendant」时，将当前 diamond 信息回调给上层，便于后续步骤使用
   onAddPendant?: (stone: BackendStoneItem) => void;
+  onTotalCountChange?: (total: number) => void;
   shapeIconSvgMap?: Map<string, string | undefined>;
   selectedStoneId?: number | null;
 }
@@ -36,8 +40,12 @@ export default function DiamondGrid({
   stoneType,
   selectedShape,
   filters,
+  currentPage,
+  pageSize,
+  sortBy,
   onMoreInfo,
   onAddPendant,
+  onTotalCountChange,
   shapeIconSvgMap,
   selectedStoneId,
 }: DiamondGridProps) {
@@ -55,8 +63,8 @@ export default function DiamondGrid({
         )?.[0];
 
         const result = await fetchStones({
-          page: 1,
-          pageSize: 8,
+          page: currentPage,
+          pageSize: pageSize,
           type: apiType,
           shape: shapeCode,
           color: filters.color,
@@ -67,8 +75,12 @@ export default function DiamondGrid({
           minBudget: filters.budget?.min,
           maxBudget: filters.budget?.max,
           certificate: filters.certificate,
+          ...(sortBy !== "default" && { sortBy: sortBy }),
         });
         setStones(result.data || []);
+        if (result.meta?.pagination) {
+          onTotalCountChange?.(result.meta.pagination.total);
+        }
       } catch (e) {
         console.error("加载石头列表失败", e);
         setStones([]);
@@ -78,7 +90,7 @@ export default function DiamondGrid({
     };
 
     load();
-  }, [stoneType, selectedShape, filters]);
+  }, [stoneType, selectedShape, filters, currentPage, pageSize, sortBy, onTotalCountChange]);
 
   const toggleFavorite = (id: number) => {
     setFavorites((prev) =>
@@ -107,7 +119,8 @@ export default function DiamondGrid({
             }
           >
             <div className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#e8f0fb] via-white to-[#dfe9ff] p-4 group-hover:rounded-bl-none group-hover:rounded-br-none">
-              <div className="absolute right-4 top-4 z-10">
+              {/* Temporarily commented out - may be re-enabled in the future */}
+              {/* <div className="absolute right-4 top-4 z-10">
                 <button
                   onClick={(event) => {
                     event.stopPropagation();
@@ -132,7 +145,7 @@ export default function DiamondGrid({
                     />
                   </svg>
                 </button>
-              </div>
+              </div> */}
 
               <div className="aspect-[4/3] overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-white via-[#f4f8ff] to-[#d9e6ff]">
                 <div className="flex h-full items-center justify-center">
