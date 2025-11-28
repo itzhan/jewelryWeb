@@ -1,5 +1,6 @@
 "use client"
 
+import { ChangeEvent } from "react"
 import { Slider } from "@/components/ui/slider"
 
 interface Filters {
@@ -34,6 +35,8 @@ const shapes = [
 const clarityOptions = ["SI1", "VS2", "VS1", "VVS2", "VVS1", "IF", "FL"]
 const colorOptions = ["D", "E", "F", "G", "H", "I", "J"]
 
+const clampCaratValue = (value: number) => Math.min(11, Math.max(0.5, value))
+
 export default function FilterPanel({
   isOpen,
   setIsOpen,
@@ -55,6 +58,32 @@ export default function FilterPanel({
       : [...filters.color, color]
     setFilters({ ...filters, color: newColor })
   }
+
+  const handleCaratInputChange =
+    (type: "min" | "max") => (event: ChangeEvent<HTMLInputElement>) => {
+      const parsed = Number(event.target.value)
+      if (Number.isNaN(parsed)) return
+
+      if (type === "min") {
+        const nextMin = Math.min(clampCaratValue(parsed), filters.carat.max)
+        setFilters({
+          ...filters,
+          carat: {
+            ...filters.carat,
+            min: nextMin,
+          },
+        })
+      } else {
+        const nextMax = Math.max(clampCaratValue(parsed), filters.carat.min)
+        setFilters({
+          ...filters,
+          carat: {
+            ...filters.carat,
+            max: nextMax,
+          },
+        })
+      }
+    }
 
   return (
     <div>
@@ -179,6 +208,32 @@ export default function FilterPanel({
                 {/* Carat */}
                 <div>
                   <label className="block text-sm font-semibold mb-3">Carat</label>
+                  <div className="flex gap-3 mb-3">
+                    <div className="flex-1">
+                      <span className="text-xs text-gray-500">Minimum (ct)</span>
+                      <input
+                        type="number"
+                        min={0.5}
+                        max={11}
+                        step={0.01}
+                        value={filters.carat.min}
+                        onChange={handleCaratInputChange("min")}
+                        className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-xs text-gray-500">Maximum (ct)</span>
+                      <input
+                        type="number"
+                        min={0.5}
+                        max={11}
+                        step={0.01}
+                        value={filters.carat.max}
+                        onChange={handleCaratInputChange("max")}
+                        className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
+                      />
+                    </div>
+                  </div>
                   <Slider
                     min={0.5}
                     max={11}

@@ -184,6 +184,7 @@ export interface StonesQueryParams {
   color?: string[];
   clarity?: string[];
   cut?: string[];
+  polish?: string[];
   minCarat?: number;
   maxCarat?: number;
   minBudget?: number;
@@ -197,6 +198,28 @@ export async function fetchStones(
   params: StonesQueryParams
 ): Promise<StonesListResponse> {
   return apiGet<StonesListResponse>("/stones", params);
+}
+
+export interface CertificateImageLinkParams {
+  certNo: string;
+  type: number;
+  cert?: string;
+  dia_type?: number;
+  [key: string]: string | number | undefined;
+}
+
+export interface CertificateImageLinkResponse {
+  url: string;
+}
+
+export async function fetchCertificateImageLink(
+  params: CertificateImageLinkParams
+): Promise<string> {
+  const result = await apiGet<{ data: CertificateImageLinkResponse }>(
+    "/stones/certificate-image-link",
+    params
+  );
+  return result.data.url;
 }
 
 export interface StoneImageDto {

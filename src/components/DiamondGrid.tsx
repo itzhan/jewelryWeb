@@ -62,6 +62,9 @@ export default function DiamondGrid({
           ([, label]) => label === selectedShape
         )?.[0];
 
+        // 只获取抛光等级为excellent的石头 (E、EX、ID、2EX、I)
+        const excellentPolishValues = ["E", "EX", "ID", "2EX", "I"];
+
         const result = await fetchStones({
           page: currentPage,
           pageSize: pageSize,
@@ -70,6 +73,7 @@ export default function DiamondGrid({
           color: filters.color,
           clarity: filters.clarity,
           cut: filters.cut,
+          polish: excellentPolishValues,
           minCarat: filters.carat?.min,
           maxCarat: filters.carat?.max,
           minBudget: filters.budget?.min,

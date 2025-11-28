@@ -24,6 +24,7 @@ import {
   fetchStoneDetail,
   resolveBackendImageUrl,
   fetchProductCategories,
+  fetchStoneFilters,
   type ProductDetailDto,
   type ProductCategoryDto,
   type StoneDetailDto,
@@ -57,10 +58,13 @@ export default function ProductContainer({
   const [categories, setCategories] = useState<ProductCategoryDto[] | null>(
     null
   );
+  const [shapeIconFromFilters, setShapeIconFromFilters] = useState<string | null>(
+    null
+  );
 
   const stoneShapeIcon = useMemo(
-    () => stone?.shapeIconSvg ?? stoneIconSvg ?? null,
-    [stone?.shapeIconSvg, stoneIconSvg]
+    () => stone?.shapeIconSvg ?? stoneIconSvg ?? shapeIconFromFilters ?? null,
+    [stone?.shapeIconSvg, stoneIconSvg, shapeIconFromFilters]
   );
 
   const productImages = useMemo(() => {
@@ -118,6 +122,46 @@ export default function ProductContainer({
     };
     load();
   }, []);
+
+  useEffect(() => {
+    if (!stone) {
+      setShapeIconFromFilters(null);
+      return;
+    }
+    if (stone.shapeIconSvg) {
+      // 后端已经提供图标时不需要额外请求
+      setShapeIconFromFilters(null);
+      return;
+    }
+
+    let cancelled = false;
+    const loadShapeIcon = async () => {
+      try {
+        const filters = await fetchStoneFilters();
+        if (cancelled) return;
+
+        const normalizedShape = stone.shape?.toLowerCase();
+        const matchedShape = filters.shapes.find((shape) => {
+          const code = shape.code?.toLowerCase();
+          const label = shape.label?.toLowerCase();
+          return code === normalizedShape || label === normalizedShape;
+        });
+
+        setShapeIconFromFilters(matchedShape?.iconSvg ?? null);
+      } catch (e) {
+        console.error("加载石头形状图标失败", e);
+        if (!cancelled) {
+          setShapeIconFromFilters(null);
+        }
+      }
+    };
+
+    loadShapeIcon();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [stone]);
 
   const categoryIconSvg = useMemo(() => {
     if (settingIconSvg) return settingIconSvg;
@@ -473,10 +517,10 @@ export default function ProductContainer({
                     {stone.externalM1?.toFixed(1) || "-"}x{stone.externalM2?.toFixed(1) || "-"}
                   </p>
                   <div className="flex items-center gap-2 text-gray-500">
-                    {stone.shapeIconSvg && (
+                    {stoneShapeIcon && (
                       <div
                         className="h-5 w-5"
-                        dangerouslySetInnerHTML={{ __html: stone.shapeIconSvg }}
+                        dangerouslySetInnerHTML={{ __html: stoneShapeIcon }}
                       />
                     )}
                     <span className="text-xs font-medium">

@@ -79,7 +79,7 @@ export default function CustomizationSteps({
 
     const stoneLabel: string = selectedStone
       ? `${selectedStone.carat.toFixed(2)}ct ${selectedStone.shape} ${
-          selectedStone.type === "lab_grown" ? "Lab Sapphire" : "Sapphire"
+          selectedStone.type === "lab_grown" ? "Lab" : ""
         }`
       : "Choose your stone";
 

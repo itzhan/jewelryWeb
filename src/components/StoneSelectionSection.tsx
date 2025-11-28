@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 import DiamondGrid from "@/components/DiamondGrid";
 import { Slider } from "@/components/ui/slider";
 import type { StoneFilters, StoneCutGrade } from "@/types/stone-filters";
@@ -30,6 +30,12 @@ const colorGradientStops = [
   "#f4c465",
 ];
 const BUDGET_STEP = 250;
+const CARAT_MIN = 0.5;
+const CARAT_MAX = 11;
+const CARAT_STEP = 0.1;
+
+const clampCaratValue = (value: number) =>
+  Math.min(CARAT_MAX, Math.max(CARAT_MIN, value));
 
 // Removed local shapes array - now using backend shapes data
 
@@ -97,7 +103,7 @@ const createDefaultFilters = (options?: {
     color,
     cut: availableCuts,
     // 更贴近当前 mock 数据的默认范围
-    carat: { min: 0.5, max: 2 },
+    carat: { min: CARAT_MIN, max: 2 },
     budget: { min: 250, max: 5000 },
     certificate: [],
   };
@@ -171,6 +177,10 @@ interface StoneSelectionSectionProps {
   onFiltersChange?: (filters: StoneFilters) => void;
   rangeSelectionsValue?: RangeSelections;
   onRangeSelectionsChange?: (ranges: RangeSelections) => void;
+  currentPageValue?: number;
+  onCurrentPageChange?: (page: number) => void;
+  sortByValue?: "default" | "price_asc" | "price_desc";
+  onSortByChange?: (sort: "default" | "price_asc" | "price_desc") => void;
   onMoreInfo?: (stone: BackendStoneItem) => void;
   // 点击「Add pendant」时，把当前石头对象回传给上层，便于步骤三展示真实配置
   onAddPendant?: (stone: BackendStoneItem) => void;
@@ -185,6 +195,10 @@ export default function StoneSelectionSection({
   onFiltersChange,
   rangeSelectionsValue,
   onRangeSelectionsChange,
+  currentPageValue,
+  onCurrentPageChange,
+  sortByValue,
+  onSortByChange,
   onMoreInfo,
   onAddPendant,
 }: StoneSelectionSectionProps) {
@@ -206,9 +220,9 @@ export default function StoneSelectionSection({
         cut: createInitialRange(defaultCutOptions.length),
       }
   );
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => currentPageValue ?? 1);
   const [totalCount, setTotalCount] = useState(0);
-  const [sortBy, setSortBy] = useState<"default" | "price_asc" | "price_desc">("default");
+  const [sortBy, setSortBy] = useState<"default" | "price_asc" | "price_desc">(() => sortByValue ?? "default");
   const pageSize = 8;
 
   const selectedStoneShape = selectedStone?.shape;
@@ -236,7 +250,8 @@ export default function StoneSelectionSection({
     (next: StoneFilters | ((prev: StoneFilters) => StoneFilters)) => {
       setFilters((prev) => {
         const resolved = typeof next === "function" ? next(prev) : next;
-        onFiltersChange?.(resolved);
+        // 避免渲染期同步触发父组件 setState，使用微任务延迟
+        Promise.resolve().then(() => onFiltersChange?.(resolved));
         return resolved;
       });
     },
@@ -250,7 +265,8 @@ export default function StoneSelectionSection({
           typeof next === "function"
             ? (next as (prev: RangeSelections) => RangeSelections)(prev)
             : next;
-        onRangeSelectionsChange?.(resolved);
+        // 避免渲染期同步触发父组件 setState，使用微任务延迟
+        Promise.resolve().then(() => onRangeSelectionsChange?.(resolved));
         return resolved;
       });
     },
@@ -277,6 +293,33 @@ export default function StoneSelectionSection({
       setRangeSelections(rangeSelectionsValue);
     }
   }, [rangeSelectionsValue, rangeSelections]);
+
+  // 同步当前页码从 URL
+  useEffect(() => {
+    if (currentPageValue !== undefined && currentPageValue !== currentPage) {
+      setCurrentPage(currentPageValue);
+    }
+  }, [currentPageValue, currentPage]);
+
+  // 同步排序方式从 URL
+  useEffect(() => {
+    if (sortByValue && sortByValue !== sortBy) {
+      setSortBy(sortByValue);
+    }
+  }, [sortByValue, sortBy]);
+
+  // 包装页码更新函数，同步到 URL
+  const handlePageChange = useCallback((updater: number | ((prev: number) => number)) => {
+    const newPage = typeof updater === "function" ? (updater as (prev: number) => number)(currentPage) : updater;
+    setCurrentPage(newPage);
+    onCurrentPageChange?.(newPage);
+  }, [currentPage, onCurrentPageChange]);
+
+  // 包装排序更新函数，同步到 URL
+  const handleSortChange = useCallback((newSort: "default" | "price_asc" | "price_desc") => {
+    setSortBy(newSort);
+    onSortByChange?.(newSort);
+  }, [onSortByChange]);
 
   const shapeIconSvgMap = useMemo(() => {
     const map = new Map<string, string | undefined>();
@@ -436,14 +479,59 @@ export default function StoneSelectionSection({
   };
 
   const handleCaratChange = (value: number[]) => {
-    updateFiltersState((prev) => ({
+    updateFiltersState((prev) => {
+      const nextMin = clampCaratValue(value[0]);
+      const nextMax = clampCaratValue(
+        Math.max(nextMin, value[1])
+      );
+      return {
+        ...prev,
+        carat: {
+          min: Number(nextMin.toFixed(2)),
+          max: Number(nextMax.toFixed(2)),
+        },
+      };
+    });
+  };
+
+  const applyCaratCandidate = (
+    prev: StoneFilters,
+    field: "min" | "max",
+    candidate: number
+  ) => {
+    const clamped = clampCaratValue(candidate);
+    if (field === "min") {
+      const nextMin = Math.min(clamped, prev.carat.max);
+      return {
+        ...prev,
+        carat: {
+          ...prev.carat,
+          min: Number(nextMin.toFixed(2)),
+        },
+      };
+    }
+    const nextMax = Math.max(clamped, prev.carat.min);
+    return {
       ...prev,
       carat: {
-        min: Number(value[0].toFixed(1)),
-        max: Number(value[1].toFixed(1)),
+        ...prev.carat,
+        max: Number(nextMax.toFixed(2)),
       },
-    }));
+    };
   };
+
+  const adjustCarat = (field: "min" | "max", delta: number) => {
+    updateFiltersState((prev) =>
+      applyCaratCandidate(prev, field, prev.carat[field] + delta)
+    );
+  };
+
+  const handleCaratInput =
+    (field: "min" | "max") => (event: ChangeEvent<HTMLInputElement>) => {
+      const parsed = Number(event.target.value);
+      if (Number.isNaN(parsed)) return;
+      updateFiltersState((prev) => applyCaratCandidate(prev, field, parsed));
+    };
 
   const updateBudgetField = (
     field: "min" | "max",
@@ -789,22 +877,48 @@ export default function StoneSelectionSection({
                     <p className="text-xs uppercase tracking-wide text-gray-400">
                       Minimum
                     </p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {filters.carat.min} ct
-                    </p>
+                    <div className="mt-1 flex items-baseline gap-1">
+                      <span className="text-sm text-gray-400">ct</span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={CARAT_MIN}
+                        max={CARAT_MAX}
+                        step={0.01}
+                        value={filters.carat.min}
+                        onChange={handleCaratInput("min")}
+                        className="w-28 bg-transparent text-right text-lg font-semibold text-gray-900 focus:outline-none leading-none"
+                      />
+                    </div>
                   </div>
-                  <SpinnerButtons />
+                  <SpinnerButtons
+                    onIncrease={() => adjustCarat("min", CARAT_STEP)}
+                    onDecrease={() => adjustCarat("min", -CARAT_STEP)}
+                  />
                 </div>
                 <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-gray-400">
                       Maximum
                     </p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {filters.carat.max} ct
-                    </p>
+                    <div className="mt-1 flex items-baseline gap-1">
+                      <span className="text-sm text-gray-400">ct</span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={CARAT_MIN}
+                        max={CARAT_MAX}
+                        step={0.01}
+                        value={filters.carat.max}
+                        onChange={handleCaratInput("max")}
+                        className="w-28 bg-transparent text-right text-lg font-semibold text-gray-900 focus:outline-none leading-none"
+                      />
+                    </div>
                   </div>
-                  <SpinnerButtons />
+                  <SpinnerButtons
+                    onIncrease={() => adjustCarat("max", CARAT_STEP)}
+                    onDecrease={() => adjustCarat("max", -CARAT_STEP)}
+                  />
                 </div>
               </div>
             </div>
@@ -904,7 +1018,7 @@ export default function StoneSelectionSection({
               <div className="flex gap-2">
                 <button
                   className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  onClick={() => handlePageChange(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
                   <svg
@@ -921,7 +1035,7 @@ export default function StoneSelectionSection({
                 </button>
                 <button
                   className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => setCurrentPage(p => p + 1)}
+                  onClick={() => handlePageChange(p => p + 1)}
                   disabled={currentPage * pageSize >= totalCount}
                 >
                   <svg
@@ -941,7 +1055,7 @@ export default function StoneSelectionSection({
             <select
               className="w-full max-w-xs rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-400 focus:border-gray-900 focus:outline-none"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              onChange={(e) => handleSortChange(e.target.value as typeof sortBy)}
             >
               <option value="default">Default</option>
               <option value="price_asc">Price (low-to-high)</option>

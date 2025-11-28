@@ -158,7 +158,7 @@ const getDiamondAccordionContent = (
             {stoneDetail?.type === "lab_grown" ? "Lab Diamond" : "Natural Diamond"}
           </p>
           <a
-            className="cursor-pointer text-gray-600 text-base leading-tight font-medium mt-2 underline"
+            className="cursor-pointer text-gray-600 text-base leading-tight font-medium mt-2 underline hover:text-gray-900 transition"
             href={`https://www.gia.edu/report-check?reportno=${stoneDetail?.externalReportNo || stoneDetail?.externalCertNo || ""}`}
             target="_blank"
             rel="noreferrer"
@@ -746,7 +746,7 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
               <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
                 <span className="text-amber-500">carat</span>
               </div>
-              <p className="text-3xl font-semibold text-gray-900">2.01</p>
+              <p className="text-3xl font-semibold text-gray-900">{stoneDetail?.carat.toFixed(2)}</p>
               <p className="text-xs text-gray-500">
                 Universal measurement unit for diamonds
               </p>
@@ -756,25 +756,41 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
             <div className="rounded-2xl border border-gray-200 bg-white p-4 space-y-2 shadow-sm">
               <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
                 <span className="text-pink-500">color</span>
-                <span className="text-gray-500">E</span>
+                <span className="text-gray-500">{stoneDetail?.color}</span>
               </div>
-              <div className="mt-2 h-2 w-full rounded-full bg-gradient-to-r from-yellow-50 via-amber-100 to-yellow-200 relative overflow-hidden">
-                <div className="absolute left-1/3 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border border-gray-300 bg-white shadow" />
-              </div>
-              <p className="text-xs text-gray-500">Completely colorless</p>
+              <div
+                className="mt-2 h-5 w-full rounded-md border border-gray-200 overflow-hidden"
+                style={{
+                  background: "linear-gradient(90deg, rgb(255, 254, 235) 10%, rgb(255, 255, 255) 90%)"
+                }}
+              />
+              <p className="text-xs text-gray-500">
+                {stoneDetail?.color === 'D' ? 'Absolutely colorless' :
+                 stoneDetail?.color === 'E' || stoneDetail?.color === 'F' ? 'Colorless' :
+                 stoneDetail?.color === 'G' || stoneDetail?.color === 'H' ? 'Near colorless' :
+                 stoneDetail?.color === 'I' || stoneDetail?.color === 'J' ? 'Near colorless with slight warmth' :
+                 'Noticeable color'}
+              </p>
             </div>
 
             {/* Clarity */}
             <div className="rounded-2xl border border-gray-200 bg-white p-4 space-y-2 shadow-sm">
               <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
                 <span className="text-indigo-500">clarity</span>
-                <span className="text-gray-500">SI1</span>
+                <span className="text-gray-500">{stoneDetail?.clarity}</span>
               </div>
-              <div className="mt-2 h-10 w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 flex items-center overflow-hidden">
-                <div className="flex-1 h-full bg-[radial-gradient(circle,_rgba(0,0,0,0.55)_1px,_transparent_1px)] bg-[length:8px_8px] opacity-40" />
-              </div>
+              <div
+                className="mt-2 h-5 w-full rounded-md border border-gray-200 overflow-hidden"
+                style={{
+                  background: 'url("https://cdn.shopify.com/s/files/1/0039/6994/1568/files/clarity-filter-hint.png?v=1743157435") center center / cover no-repeat'
+                }}
+              />
               <p className="text-xs text-gray-500">
-                Inclusion may be visible to the naked eye
+                {stoneDetail?.clarity?.startsWith('FL') || stoneDetail?.clarity?.startsWith('IF') ? 'No inclusions visible' :
+                 stoneDetail?.clarity?.startsWith('VVS') ? 'Very very slight inclusions' :
+                 stoneDetail?.clarity?.startsWith('VS') ? 'Very slight inclusions' :
+                 stoneDetail?.clarity?.startsWith('SI') ? 'Slight inclusions' :
+                 'Inclusions may be visible'}
               </p>
             </div>
 
@@ -783,9 +799,12 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
               <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
                 <span className="text-emerald-500">cut</span>
               </div>
-              <p className="text-2xl font-semibold text-gray-900">Excellent</p>
+              <p className="text-2xl font-semibold text-gray-900">{stoneDetail?.cut}</p>
               <p className="text-xs text-gray-500">
-                Incredible fire and brilliance
+                {stoneDetail?.cut?.toLowerCase() === 'excellent' || stoneDetail?.cut?.toLowerCase() === 'ideal' ? 'Incredible fire and brilliance' :
+                 stoneDetail?.cut?.toLowerCase() === 'very good' ? 'Exceptional brilliance' :
+                 stoneDetail?.cut?.toLowerCase() === 'good' ? 'Good brilliance' :
+                 'Standard brilliance'}
               </p>
             </div>
 
@@ -794,7 +813,11 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
               <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
                 <span className="text-cyan-500">dimensions (mm)</span>
               </div>
-              <p className="text-3xl font-semibold text-gray-900">8.19x8.24</p>
+              <p className="text-3xl font-semibold text-gray-900">
+                {stoneDetail?.externalM1 && stoneDetail?.externalM2
+                  ? `${stoneDetail.externalM1.toFixed(2)}x${stoneDetail.externalM2.toFixed(2)}`
+                  : 'N/A'}
+              </p>
               <div className="flex items-center gap-2 text-gray-500">
                 <svg
                   className="h-5 w-5"
@@ -807,7 +830,7 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
                   <path d="M8 28l7-6 7 6" />
                   <line x1="8" y1="28" x2="16" y2="28" />
                 </svg>
-                <span className="text-xs font-medium">Ratio: 0.99</span>
+                <span className="text-xs font-medium">Ratio: {stoneDetail?.ratio.toFixed(2)}</span>
               </div>
             </div>
 
@@ -816,14 +839,14 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
               <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
                 <span className="text-yellow-500">certification</span>
               </div>
-              <p className="text-2xl font-semibold text-gray-900">GIA</p>
+              <p className="text-2xl font-semibold text-gray-900">{stoneDetail?.externalCertType || stoneDetail?.certificate || 'N/A'}</p>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-xs text-gray-700">
                   <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-yellow-400 bg-yellow-50 text-[10px] font-semibold text-yellow-700">
-                    LAB
+                    {stoneDetail?.type === 'lab_grown' ? 'LAB' : 'NAT'}
                   </span>
                   <span className="uppercase tracking-[0.25em] text-[10px] text-yellow-700">
-                    diamond
+                    {stoneDetail?.type === 'lab_grown' ? 'Lab-Grown' : 'Natural'} diamond
                   </span>
                 </div>
                 <button

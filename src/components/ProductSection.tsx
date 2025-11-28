@@ -1,8 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import ProductDetails from "./ProductDetails";
 import type { StoneDetailDto } from "@/lib/backend";
-import { resolveBackendImageUrl } from "@/lib/backend";
+import {
+  resolveBackendImageUrl,
+  fetchCertificateImageLink,
+} from "@/lib/backend";
 
 type GalleryImage = {
   url: string;
@@ -56,6 +60,63 @@ export default function ProductSection({
   stoneDetail,
   productImages,
 }: ProductSectionProps) {
+  const [certificateLink, setCertificateLink] = useState<string | null>(null);
+  const [certificateError, setCertificateError] = useState<string | null>(null);
+  const [isCertificateLinkLoading, setIsCertificateLinkLoading] =
+    useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+
+    if (!stoneDetail) {
+      setCertificateLink(null);
+      setCertificateError(null);
+      setIsCertificateLinkLoading(false);
+      return;
+    }
+
+    const certNo =
+      stoneDetail.externalReportNo || stoneDetail.externalCertNo || "";
+    if (!certNo) {
+      setCertificateLink(null);
+      setCertificateError(null);
+      setIsCertificateLinkLoading(false);
+      return;
+    }
+
+    setCertificateLink(null);
+    setCertificateError(null);
+    setIsCertificateLinkLoading(true);
+
+    fetchCertificateImageLink({
+      certNo,
+      type: 1,
+      cert: stoneDetail.externalCertType,
+    })
+      .then((url) => {
+        if (!isActive) return;
+        setCertificateLink(url);
+      })
+      .catch((error) => {
+        if (!isActive) return;
+        console.error("获取证书链接失败", error);
+        setCertificateLink(null);
+        setCertificateError("证书链接加载失败");
+      })
+      .finally(() => {
+        if (!isActive) return;
+        setIsCertificateLinkLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [
+    stoneDetail?.externalReportNo,
+    stoneDetail?.externalCertNo,
+    stoneDetail?.externalCertType,
+    stoneDetail,
+  ]);
   // 如果是步骤一详情页且有石头数据，使用石头图片；否则使用产品图片或默认图片
   const images =
     isStepOneDetails && stoneDetail?.images?.length
@@ -168,14 +229,28 @@ export default function ProductSection({
               <p className="text-[#937D67] text-2xl leading-tight uppercase font-bold">
                 {stoneDetail.type === "lab_grown" ? "Lab Diamond" : "Natural Diamond"}
               </p>
-              <a
-                className="cursor-pointer text-gray-600 text-base leading-tight font-medium mt-2 underline"
-                href={`https://www.gia.edu/report-check?reportno=${stoneDetail.externalReportNo || stoneDetail.externalCertNo || ""}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                View Certificate
-              </a>
+              {certificateLink ? (
+                <a
+                  href={certificateLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="cursor-pointer text-gray-600 text-base leading-tight font-medium mt-2 underline hover:text-gray-900 transition"
+                >
+                  View Certificate
+                </a>
+              ) : certificateError ? (
+                <span className="text-gray-400 text-sm mt-2">
+                  {certificateError}
+                </span>
+              ) : isCertificateLinkLoading ? (
+                <span className="text-gray-400 text-sm mt-2">
+                  Loading certificate...
+                </span>
+              ) : (
+                <span className="text-gray-400 text-sm mt-2">
+                  Certificate unavailable
+                </span>
+              )}
             </div>
           ) : (
             images[3] && (
@@ -217,6 +292,7 @@ export default function ProductSection({
         showBuySettingButton={showBuySettingButton}
         stoneDetail={stoneDetail}
       />
+
     </div>
   );
 }
