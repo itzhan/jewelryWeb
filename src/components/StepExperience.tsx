@@ -252,7 +252,7 @@ export default function StepExperience() {
       clarity: ["SI1", "VS2", "VS1", "VVS2", "VVS1", "IF", "FL"],
       color: ["J", "I", "H", "G", "F", "E", "D"],
       cut: ["good", "veryGood", "excellent"],
-      carat: { min: 0.5, max: 11 },
+      carat: { min: 0.5, max: 20 },
       budget: { min: 250, max: 5000 },
       certificate: [],
     };

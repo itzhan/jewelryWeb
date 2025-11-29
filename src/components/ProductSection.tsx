@@ -219,12 +219,12 @@ export default function ProductSection({
           {isStepOneDetails && stoneDetail ? (
             <div className="relative aspect-square rounded-[32px] overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 shadow-[0_18px_45px_rgba(15,23,42,0.08)] flex justify-center items-center flex-col text-center p-8">
               <img
-                src="https://cdn.shopify.com/oxygen-v2/24658/9071/18525/2591741/build/_assets/kzr-icon-gia-crt-N3UI7WNQ.svg"
+                src="https://cdn.shopify.com/oxygen-v2/24658/9071/18525/2676729/build/_assets/kzr-icon-igi-crt-GAZVFCK3.svg"
                 width="400"
                 height="400"
                 loading="eager"
-                alt="Diamond certificate image"
-                className="w-full aspect-square object-cover max-w-[8rem] mb-4"
+                alt="Diamond certificate Round shape desktop image "
+                className="DiamondCertificate__Image w-full aspect-square fadeIn object-cover max-w-[8rem] mb-4"
               />
               <p className="text-[#937D67] text-2xl leading-tight uppercase font-bold">
                 {stoneDetail.type === "lab_grown" ? "Lab Diamond" : "Natural Diamond"}

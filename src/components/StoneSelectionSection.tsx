@@ -31,7 +31,7 @@ const colorGradientStops = [
 ];
 const BUDGET_STEP = 250;
 const CARAT_MIN = 0.5;
-const CARAT_MAX = 11;
+const CARAT_MAX = 20;
 const CARAT_STEP = 0.1;
 
 const clampCaratValue = (value: number) =>
@@ -203,14 +203,22 @@ export default function StoneSelectionSection({
   onAddPendant,
 }: StoneSelectionSectionProps) {
   const stoneType = "labGrown" as const;
+  const initialFilters = useMemo(
+    () => filtersValue ?? createDefaultFilters(),
+    [filtersValue]
+  );
   const [backendOptions, setBackendOptions] = useState<StoneFiltersDto | null>(
     null
   );
   const [selectedShape, setSelectedShape] = useState<string>(
     selectedShapeValue ?? "Heart"
   );
-  const [filters, setFilters] = useState<StoneFilters>(() =>
-    filtersValue ?? createDefaultFilters()
+  const [filters, setFilters] = useState<StoneFilters>(() => initialFilters);
+  const [caratInput, setCaratInput] = useState<{ min: string; max: string }>(
+    () => ({
+      min: initialFilters.carat.min.toString(),
+      max: initialFilters.carat.max.toString(),
+    })
   );
   const [rangeSelections, setRangeSelections] = useState<RangeSelections>(
     () =>
@@ -231,6 +239,14 @@ export default function StoneSelectionSection({
   useEffect(() => {
     setCurrentPage(1);
   }, [filters, sortBy, selectedShape]);
+
+  // 同步数字输入框显示值，支持临时清空重新输入
+  useEffect(() => {
+    setCaratInput({
+      min: filters.carat.min.toString(),
+      max: filters.carat.max.toString(),
+    });
+  }, [filters.carat.min, filters.carat.max]);
 
   const syncJsonEqual = (a: unknown, b: unknown) =>
     JSON.stringify(a) === JSON.stringify(b);
@@ -520,6 +536,22 @@ export default function StoneSelectionSection({
     };
   };
 
+  const handleCaratBlur = (field: "min" | "max") => () => {
+    const raw = caratInput[field];
+    const numeric = Number(raw);
+
+    if (raw.trim() === "" || Number.isNaN(numeric)) {
+      // 恢复为当前有效值
+      setCaratInput((prev) => ({
+        ...prev,
+        [field]: filters.carat[field].toString(),
+      }));
+      return;
+    }
+
+    updateFiltersState((prev) => applyCaratCandidate(prev, field, numeric));
+  };
+
   const adjustCarat = (field: "min" | "max", delta: number) => {
     updateFiltersState((prev) =>
       applyCaratCandidate(prev, field, prev.carat[field] + delta)
@@ -528,8 +560,16 @@ export default function StoneSelectionSection({
 
   const handleCaratInput =
     (field: "min" | "max") => (event: ChangeEvent<HTMLInputElement>) => {
-      const parsed = Number(event.target.value);
+      const value = event.target.value;
+      setCaratInput((prev) => ({ ...prev, [field]: value }));
+
+      if (value.trim() === "") {
+        return;
+      }
+
+      const parsed = Number(value);
       if (Number.isNaN(parsed)) return;
+
       updateFiltersState((prev) => applyCaratCandidate(prev, field, parsed));
     };
 
@@ -863,8 +903,8 @@ export default function StoneSelectionSection({
               </div>
               <div className="mt-4">
                 <Slider
-                  min={0.5}
-                  max={11}
+                  min={CARAT_MIN}
+                  max={CARAT_MAX}
                   step={0.1}
                   value={[filters.carat.min, filters.carat.max]}
                   onValueChange={handleCaratChange}
@@ -885,8 +925,9 @@ export default function StoneSelectionSection({
                         min={CARAT_MIN}
                         max={CARAT_MAX}
                         step={0.01}
-                        value={filters.carat.min}
+                        value={caratInput.min}
                         onChange={handleCaratInput("min")}
+                        onBlur={handleCaratBlur("min")}
                         className="w-28 bg-transparent text-right text-lg font-semibold text-gray-900 focus:outline-none leading-none"
                       />
                     </div>
@@ -909,8 +950,9 @@ export default function StoneSelectionSection({
                         min={CARAT_MIN}
                         max={CARAT_MAX}
                         step={0.01}
-                        value={filters.carat.max}
+                        value={caratInput.max}
                         onChange={handleCaratInput("max")}
+                        onBlur={handleCaratBlur("max")}
                         className="w-28 bg-transparent text-right text-lg font-semibold text-gray-900 focus:outline-none leading-none"
                       />
                     </div>

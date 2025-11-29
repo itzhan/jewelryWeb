@@ -35,7 +35,7 @@ const shapes = [
 const clarityOptions = ["SI1", "VS2", "VS1", "VVS2", "VVS1", "IF", "FL"]
 const colorOptions = ["D", "E", "F", "G", "H", "I", "J"]
 
-const clampCaratValue = (value: number) => Math.min(11, Math.max(0.5, value))
+const clampCaratValue = (value: number) => Math.min(20, Math.max(0.5, value))
 
 export default function FilterPanel({
   isOpen,
@@ -214,7 +214,7 @@ export default function FilterPanel({
                       <input
                         type="number"
                         min={0.5}
-                        max={11}
+                        max={20}
                         step={0.01}
                         value={filters.carat.min}
                         onChange={handleCaratInputChange("min")}
@@ -226,7 +226,7 @@ export default function FilterPanel({
                       <input
                         type="number"
                         min={0.5}
-                        max={11}
+                        max={20}
                         step={0.01}
                         value={filters.carat.max}
                         onChange={handleCaratInputChange("max")}
@@ -236,7 +236,7 @@ export default function FilterPanel({
                   </div>
                   <Slider
                     min={0.5}
-                    max={11}
+                    max={20}
                     step={0.1}
                     value={[filters.carat.min, filters.carat.max]}
                     onValueChange={(value: number[]) =>
