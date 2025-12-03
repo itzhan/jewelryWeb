@@ -106,10 +106,10 @@ export default function CustomizationSteps({
       settingChoice === "ring"
         ? "RING"
         : settingChoice === "necklace"
-        ? "PENDANT"
+        ? "RING"
         : settingChoice === "earring"
         ? "EARRING"
-        : "PENDANT";
+        : "RING";
 
     return [
       {

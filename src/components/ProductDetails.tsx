@@ -77,8 +77,8 @@ export const accordionContent: Record<
     icon: <RotateCcw className="w-4 h-4 text-gray-600" />,
     body: (
       <p className="text-sm text-gray-600 leading-relaxed">
-        Received an item you don’t love? KEYZAR is proud to offer free returns
-        within <strong>30 days</strong> from receiving your item. Contact our
+        Received an item you don’t love? WATSONGEM is proud to offer free returns
+        within <strong>35 days</strong> from receiving your item. Contact our
         support team to issue a return label and we’ll take care of the rest.
       </p>
     ),
