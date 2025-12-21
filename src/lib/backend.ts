@@ -41,6 +41,19 @@ async function apiGet<T>(
   return (await res.json()) as T;
 }
 
+async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const url = new URL(path, BACKEND_BASE_URL);
+  const res = await fetch(url.toString(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body ?? {}),
+  });
+  if (!res.ok) {
+    throw new Error(`Request failed: ${res.status}`);
+  }
+  return (await res.json()) as T;
+}
+
 // ========= Products =========
 
 export interface BackendProductSummary {
@@ -52,6 +65,7 @@ export interface BackendProductSummary {
   colors: string[];
   categoryCode?: string;
   categoryName?: string;
+  shopifyVariantId?: string;
 }
 
 interface ProductsListResponse {
@@ -98,6 +112,7 @@ export interface ProductDetailDto {
   };
   availableColors: string[];
   images: ProductImageDto[];
+  shopifyVariantId?: string;
 }
 
 export async function fetchProductDetail(
@@ -124,6 +139,7 @@ export interface BackendStoneItem {
   ratio: number;
   price: number;
   currency: string;
+  shopifyVariantId?: string;
   externalId?: number;
   externalDRef?: string;
   externalReportNo?: string;
@@ -181,6 +197,7 @@ export interface StonesQueryParams {
   page?: number;
   pageSize?: number;
   shape?: string;
+  name?: string;
   color?: string[];
   clarity?: string[];
   cut?: string[];
@@ -238,6 +255,30 @@ export interface StoneDetailDto extends BackendStoneItem {
 
 export async function fetchStoneDetail(id: number): Promise<StoneDetailDto> {
   const result = await apiGet<{ data: StoneDetailDto }>(`/stones/${id}`);
+  return result.data;
+}
+
+// ========= Draft Order Checkout =========
+
+export interface DraftOrderCreateRequest {
+  productId?: number;
+  stoneId?: number;
+  email?: string;
+}
+
+export interface DraftOrderCreateResponse {
+  draftOrderId: string;
+  invoiceUrl?: string | null;
+  status?: string | null;
+}
+
+export async function createDraftOrder(
+  payload: DraftOrderCreateRequest
+): Promise<DraftOrderCreateResponse> {
+  const result = await apiPost<{ data: DraftOrderCreateResponse }>(
+    "/checkout/draft-order",
+    payload
+  );
   return result.data;
 }
 

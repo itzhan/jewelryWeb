@@ -25,6 +25,7 @@ import {
   resolveBackendImageUrl,
   fetchProductCategories,
   fetchStoneFilters,
+  createDraftOrder,
   type ProductDetailDto,
   type ProductCategoryDto,
   type StoneDetailDto,
@@ -61,6 +62,7 @@ export default function ProductContainer({
   const [shapeIconFromFilters, setShapeIconFromFilters] = useState<string | null>(
     null
   );
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
   const stoneShapeIcon = useMemo(
     () => stone?.shapeIconSvg ?? stoneIconSvg ?? shapeIconFromFilters ?? null,
@@ -162,6 +164,62 @@ export default function ProductContainer({
       cancelled = true;
     };
   }, [stone]);
+
+  const buildDraftOrderPayload = () => {
+    const payload: { productId?: number; stoneId?: number } = {};
+    if (product?.id) {
+      payload.productId = product.id;
+    }
+    if (stone?.id) {
+      payload.stoneId = stone.id;
+    }
+    return payload;
+  };
+
+  const copyToClipboard = async (text: string) => {
+    if (typeof navigator === "undefined" || !navigator.clipboard) return false;
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  };
+
+  const handleCheckout = async (redirectToCheckout: boolean) => {
+    if (isCheckoutLoading) return;
+
+    const payload = buildDraftOrderPayload();
+    if (!payload.productId && !payload.stoneId) {
+      window.alert("缺少商品或石头，无法生成付款链接。");
+      return;
+    }
+
+    setIsCheckoutLoading(true);
+    try {
+      const result = await createDraftOrder(payload);
+      if (result.invoiceUrl) {
+        if (redirectToCheckout) {
+          window.location.href = result.invoiceUrl;
+          return;
+        }
+
+        const copied = await copyToClipboard(result.invoiceUrl);
+        if (copied) {
+          window.alert("付款链接已复制");
+        } else {
+          window.prompt("付款链接", result.invoiceUrl);
+        }
+        return;
+      }
+      window.alert("已创建草稿订单，但未返回付款链接。");
+    } catch (error) {
+      console.error("创建 Shopify 草稿订单失败", error);
+      window.alert("结账失败，请检查 Shopify 配置或稍后重试");
+    } finally {
+      setIsCheckoutLoading(false);
+    }
+  };
 
   const categoryIconSvg = useMemo(() => {
     if (settingIconSvg) return settingIconSvg;
@@ -364,15 +422,27 @@ export default function ProductContainer({
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            <button className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-900 transition-all duration-300 flex items-center justify-between px-8 group relative overflow-hidden shadow-lg hover:shadow-xl">
+            <button
+              type="button"
+              onClick={() => handleCheckout(true)}
+              disabled={isCheckoutLoading}
+              className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-900 transition-all duration-300 flex items-center justify-between px-8 group relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
+            >
               <Heart className="w-5 h-5 transition-all group-hover:scale-110 group-hover:fill-white" />
-              <span className="relative z-10 text-base">Secure Checkout</span>
+              <span className="relative z-10 text-base">
+                {isCheckoutLoading ? "Processing..." : "Secure Checkout"}
+              </span>
               <MessageCircle className="w-5 h-5 transition-all group-hover:scale-110" />
             </button>
 
-            <button className="w-full border-2 border-black text-black py-4 rounded-full font-medium hover:bg-black hover:text-white transition-all duration-300 flex items-center justify-between px-8 group shadow-sm hover:shadow-md">
+            <button
+              type="button"
+              onClick={() => handleCheckout(false)}
+              disabled={isCheckoutLoading}
+              className="w-full border-2 border-black text-black py-4 rounded-full font-medium hover:bg-black hover:text-white transition-all duration-300 flex items-center justify-between px-8 group shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+            >
               <Lock className="w-4 h-4 transition-all group-hover:scale-110" />
-              <span className="text-base">Add to Shopping Bag</span>
+              <span className="text-base">Get Payment Link</span>
               <Plus className="w-5 h-5 transition-all group-hover:rotate-90 group-hover:scale-110" />
             </button>
           </div>

@@ -11,6 +11,7 @@ interface DiamondGridProps {
   currentPage: number;
   pageSize: number;
   sortBy: "default" | "price_asc" | "price_desc";
+  nameQuery?: string;
   onMoreInfo?: (stone: BackendStoneItem) => void;
   // 点击「Add pendant」时，将当前 diamond 信息回调给上层，便于后续步骤使用
   onAddPendant?: (stone: BackendStoneItem) => void;
@@ -43,6 +44,7 @@ export default function DiamondGrid({
   currentPage,
   pageSize,
   sortBy,
+  nameQuery,
   onMoreInfo,
   onAddPendant,
   onTotalCountChange,
@@ -79,6 +81,7 @@ export default function DiamondGrid({
           minBudget: filters.budget?.min,
           maxBudget: filters.budget?.max,
           certificate: filters.certificate,
+          name: nameQuery?.trim() || undefined,
           ...(sortBy !== "default" && { sortBy: sortBy }),
         });
         setStones(result.data || []);
@@ -88,13 +91,14 @@ export default function DiamondGrid({
       } catch (e) {
         console.error("加载石头列表失败", e);
         setStones([]);
+        onTotalCountChange?.(0);
       } finally {
         setLoading(false);
       }
     };
 
     load();
-  }, [stoneType, selectedShape, filters, currentPage, pageSize, sortBy, onTotalCountChange]);
+  }, [stoneType, selectedShape, filters, currentPage, pageSize, sortBy, nameQuery, onTotalCountChange]);
 
   const toggleFavorite = (id: number) => {
     setFavorites((prev) =>

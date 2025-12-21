@@ -1,0 +1,19 @@
+FROM node:20-bullseye
+
+WORKDIR /usr/src/app
+
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+ARG PNPM_VERSION=10.22.0
+
+RUN npm config set registry "$NPM_REGISTRY" \
+  && npm i -g "pnpm@${PNPM_VERSION}" \
+  && pnpm config set registry "$NPM_REGISTRY"
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["pnpm", "dev", "--", "-H", "0.0.0.0", "--port", "3000"]

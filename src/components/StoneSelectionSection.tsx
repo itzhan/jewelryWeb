@@ -230,6 +230,7 @@ export default function StoneSelectionSection({
   );
   const [currentPage, setCurrentPage] = useState(() => currentPageValue ?? 1);
   const [totalCount, setTotalCount] = useState(0);
+  const [nameQuery, setNameQuery] = useState("");
   const [sortBy, setSortBy] = useState<"default" | "price_asc" | "price_desc">(() => sortByValue ?? "default");
   const pageSize = 8;
 
@@ -238,7 +239,7 @@ export default function StoneSelectionSection({
   // Reset to page 1 when filters or sorting changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters, sortBy, selectedShape]);
+  }, [filters, sortBy, selectedShape, nameQuery]);
 
   // 同步数字输入框显示值，支持临时清空重新输入
   useEffect(() => {
@@ -1094,15 +1095,24 @@ export default function StoneSelectionSection({
                 </button>
               </div>
             </div>
-            <select
-              className="w-full max-w-xs rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-400 focus:border-gray-900 focus:outline-none"
-              value={sortBy}
-              onChange={(e) => handleSortChange(e.target.value as typeof sortBy)}
-            >
-              <option value="default">Default</option>
-              <option value="price_asc">Price (low-to-high)</option>
-              <option value="price_desc">Price (high-to-low)</option>
-            </select>
+            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center md:justify-end">
+              <input
+                type="text"
+                value={nameQuery}
+                onChange={(e) => setNameQuery(e.target.value)}
+                placeholder="按名称搜索（全库）"
+                className="w-full max-w-xs rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition placeholder:text-gray-400 hover:border-gray-400 focus:border-gray-900 focus:outline-none md:w-64"
+              />
+              <select
+                className="w-full max-w-xs rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-400 focus:border-gray-900 focus:outline-none"
+                value={sortBy}
+                onChange={(e) => handleSortChange(e.target.value as typeof sortBy)}
+              >
+                <option value="default">Default</option>
+                <option value="price_asc">Price (low-to-high)</option>
+                <option value="price_desc">Price (high-to-low)</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -1114,6 +1124,7 @@ export default function StoneSelectionSection({
             currentPage={currentPage}
             pageSize={pageSize}
             sortBy={sortBy}
+            nameQuery={nameQuery}
             onMoreInfo={onMoreInfo}
             onAddPendant={onAddPendant}
             onTotalCountChange={setTotalCount}
