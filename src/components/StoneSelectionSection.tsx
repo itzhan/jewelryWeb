@@ -213,6 +213,9 @@ export default function StoneSelectionSection({
   const [selectedShape, setSelectedShape] = useState<string>(
     selectedShapeValue ?? "Heart"
   );
+  const [selectedShapeCode, setSelectedShapeCode] = useState<string | undefined>(
+    undefined
+  );
   const [filters, setFilters] = useState<StoneFilters>(() => initialFilters);
   const [caratInput, setCaratInput] = useState<{ min: string; max: string }>(
     () => ({
@@ -229,8 +232,11 @@ export default function StoneSelectionSection({
       }
   );
   const [currentPage, setCurrentPage] = useState(() => currentPageValue ?? 1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [nameQuery, setNameQuery] = useState("");
+  const [pageInfo, setPageInfo] = useState<{
+    total?: number;
+    count: number;
+    hasNext: boolean;
+  }>({ total: undefined, count: 0, hasNext: false });
   const [sortBy, setSortBy] = useState<"default" | "price_asc" | "price_desc">(() => sortByValue ?? "default");
   const pageSize = 8;
 
@@ -239,7 +245,7 @@ export default function StoneSelectionSection({
   // Reset to page 1 when filters or sorting changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters, sortBy, selectedShape, nameQuery]);
+  }, [filters, sortBy, selectedShape]);
 
   // 同步数字输入框显示值，支持临时清空重新输入
   useEffect(() => {
@@ -253,8 +259,12 @@ export default function StoneSelectionSection({
     JSON.stringify(a) === JSON.stringify(b);
 
   const updateSelectedShape = useCallback(
-    (shape: string, options?: { notifyParent?: boolean }) => {
+    (
+      shape: string,
+      options?: { notifyParent?: boolean; code?: string }
+    ) => {
       setSelectedShape(shape);
+      setSelectedShapeCode(options?.code);
       if (options?.notifyParent) {
         // 避免渲染期同步触发父组件 setState，使用微任务延迟
         Promise.resolve().then(() => onSelectedShapeChange?.(shape));
@@ -293,8 +303,19 @@ export default function StoneSelectionSection({
   useEffect(() => {
     if (selectedShapeValue && selectedShapeValue !== selectedShape) {
       setSelectedShape(selectedShapeValue);
+      if (backendOptions?.shapes?.length) {
+        const normalized = selectedShapeValue.toLowerCase();
+        const matched = backendOptions.shapes.find(
+          (shape) =>
+            shape.label?.toLowerCase() === normalized ||
+            shape.code?.toLowerCase() === normalized
+        );
+        if (matched?.code) {
+          setSelectedShapeCode(matched.code);
+        }
+      }
     }
-  }, [selectedShapeValue, selectedShape]);
+  }, [selectedShapeValue, selectedShape, backendOptions]);
 
   useEffect(() => {
     if (filtersValue && !syncJsonEqual(filtersValue, filters)) {
@@ -338,6 +359,17 @@ export default function StoneSelectionSection({
     onSortByChange?.(newSort);
   }, [onSortByChange]);
 
+  const handlePaginationChange = useCallback((meta: {
+    total?: number;
+    page: number;
+    pageSize: number;
+    count: number;
+    hasNext: boolean;
+  }) => {
+    setPageInfo({ total: meta.total, count: meta.count, hasNext: meta.hasNext });
+    // 总数不一定有，缺失时用 hasNext 控制翻页
+  }, []);
+
   const shapeIconSvgMap = useMemo(() => {
     const map = new Map<string, string | undefined>();
     backendOptions?.shapes.forEach((item) => {
@@ -374,17 +406,28 @@ export default function StoneSelectionSection({
         // 选中一个后端实际存在的形状名称
         if (data.shapes.length > 0) {
           const normalizedStoneShape = selectedStoneShape?.toLowerCase();
-          const nextShape =
-            selectedShapeValue ??
+          const normalizedSelected = selectedShapeValue?.toLowerCase();
+          const nextShapeItem =
+            (normalizedSelected
+              ? data.shapes.find(
+                  (shape) =>
+                    shape.code?.toLowerCase() === normalizedSelected ||
+                    shape.label.toLowerCase() === normalizedSelected
+                )
+              : null) ||
             (normalizedStoneShape
               ? data.shapes.find(
                   (shape) =>
                     shape.code?.toLowerCase() === normalizedStoneShape ||
                     shape.label.toLowerCase() === normalizedStoneShape
-                )?.label
-              : data.shapes[0].label);
-          if (nextShape) {
-            updateSelectedShape(nextShape);
+                )
+              : null) ||
+            data.shapes[0];
+
+          if (nextShapeItem?.label) {
+            updateSelectedShape(nextShapeItem.label, {
+              code: nextShapeItem.code,
+            });
           }
         }
       } catch (e) {
@@ -414,7 +457,7 @@ export default function StoneSelectionSection({
     );
 
     if (matchedShape?.label) {
-      updateSelectedShape(matchedShape.label);
+      updateSelectedShape(matchedShape.label, { code: matchedShape.code });
     }
   }, [backendOptions, selectedStone, updateSelectedShape]);
 
@@ -608,7 +651,10 @@ export default function StoneSelectionSection({
 
   const handleReset = () => {
     if (backendOptions?.shapes?.length) {
-      updateSelectedShape(backendOptions.shapes[0].label, { notifyParent: true });
+      updateSelectedShape(backendOptions.shapes[0].label, {
+        notifyParent: true,
+        code: backendOptions.shapes[0].code,
+      });
     } else {
       updateSelectedShape("Heart", { notifyParent: true });
     }
@@ -647,7 +693,12 @@ export default function StoneSelectionSection({
                 <button
                   key={shape.code}
                   type="button"
-                  onClick={() => updateSelectedShape(shape.label, { notifyParent: true })}
+                  onClick={() =>
+                    updateSelectedShape(shape.label, {
+                      notifyParent: true,
+                      code: shape.code,
+                    })
+                  }
                   className={`flex h-28 w-24 flex-col items-center justify-center rounded-2xl border-2 transition-all ${
                     isSelected
                       ? "border-black shadow-[0_12px_24px_rgba(0,0,0,0.12)]"
@@ -1057,9 +1108,26 @@ export default function StoneSelectionSection({
         <div className="mt-12 border-t border-gray-200 pt-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4 text-sm font-medium text-gray-600">
-              <span>Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount}</span>
+              <span>
+                {(() => {
+                  const start = pageInfo.count
+                    ? (currentPage - 1) * pageSize + 1
+                    : 0;
+                  const end = pageInfo.count
+                    ? (currentPage - 1) * pageSize + pageInfo.count
+                    : 0;
+                  const totalLabel =
+                    typeof pageInfo.total === "number"
+                      ? pageInfo.total
+                      : pageInfo.hasNext
+                      ? `${end}+`
+                      : `${end}`;
+                  return `Showing ${start}-${end} of ${totalLabel}`;
+                })()}
+              </span>
               <div className="flex gap-2">
                 <button
+                  type="button"
                   className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handlePageChange(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
@@ -1077,9 +1145,14 @@ export default function StoneSelectionSection({
                   </svg>
                 </button>
                 <button
+                  type="button"
                   className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handlePageChange(p => p + 1)}
-                  disabled={currentPage * pageSize >= totalCount}
+                  disabled={
+                    typeof pageInfo.total === "number"
+                      ? currentPage * pageSize >= pageInfo.total
+                      : !pageInfo.hasNext
+                  }
                 >
                   <svg
                     className="h-4 w-4"
@@ -1096,13 +1169,6 @@ export default function StoneSelectionSection({
               </div>
             </div>
             <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center md:justify-end">
-              <input
-                type="text"
-                value={nameQuery}
-                onChange={(e) => setNameQuery(e.target.value)}
-                placeholder="按名称搜索（全库）"
-                className="w-full max-w-xs rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition placeholder:text-gray-400 hover:border-gray-400 focus:border-gray-900 focus:outline-none md:w-64"
-              />
               <select
                 className="w-full max-w-xs rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-400 focus:border-gray-900 focus:outline-none"
                 value={sortBy}
@@ -1120,14 +1186,14 @@ export default function StoneSelectionSection({
           <DiamondGrid
             stoneType={stoneType}
             selectedShape={selectedShape}
+            selectedShapeCode={selectedShapeCode}
             filters={filters}
             currentPage={currentPage}
             pageSize={pageSize}
             sortBy={sortBy}
-            nameQuery={nameQuery}
             onMoreInfo={onMoreInfo}
             onAddPendant={onAddPendant}
-            onTotalCountChange={setTotalCount}
+            onPaginationChange={handlePaginationChange}
             shapeIconSvgMap={shapeIconSvgMap}
             selectedStoneId={selectedStone?.id}
           />

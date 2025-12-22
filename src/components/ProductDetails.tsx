@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type {
   StoneDetailDto,
@@ -8,6 +8,7 @@ import type {
   StoneFilterOption,
 } from "@/lib/backend";
 import { fetchMaterials, fetchStoneFilters } from "@/lib/backend";
+import { buildCertificateLink } from "@/lib/certificate";
 import {
   Heart,
   Plane,
@@ -31,26 +32,55 @@ export const knowSettingStats = [
   { label: "Zinc", value: "4.7%", color: "bg-gray-300" },
 ];
 
-export const pendantDetails = [
-  { label: "SKU", value: "243Q-DP-R-YG-14" },
-  { label: "Center Stone Shape", value: "Round" },
-  { label: "Material", value: "14k Yellow Gold" },
-  { label: "Chain Length", value: "18 in adjustable" },
-];
+const getPendantDetails = (
+  centerStoneShape?: string | null,
+  centerStoneShapeIconSvg?: string | null
+) => {
+  const centerShapeLabel =
+    centerStoneShape && centerStoneShape.trim().length > 0
+      ? centerStoneShape
+      : "—";
+  const centerShapeValue =
+    centerStoneShapeIconSvg && centerShapeLabel !== "—" ? (
+      <span className="inline-flex items-center gap-2">
+        <span
+          className="inline-flex h-5 w-5 items-center justify-center text-gray-600"
+          dangerouslySetInnerHTML={{ __html: centerStoneShapeIconSvg }}
+        />
+        <span>{centerShapeLabel}</span>
+      </span>
+    ) : (
+      centerShapeLabel
+    );
+
+  return [
+    { label: "SKU", value: "243Q-DP-R-YG-14" },
+    {
+      label: "Center Stone Shape",
+      value: centerShapeValue,
+    },
+    { label: "Material", value: "14k Yellow Gold" },
+    { label: "Chain Length", value: "18 in adjustable" },
+  ];
+};
 
 export const accordionOrder = ["pendant", "shipping", "returns"] as const;
 export type AccordionSection = (typeof accordionOrder)[number];
 
-export const accordionContent: Record<
+export const buildAccordionContent = (
+  centerStoneShape?: string | null,
+  centerStoneShapeIconSvg?: string | null
+): Record<
   AccordionSection,
   { title: string; icon: JSX.Element; body: JSX.Element }
-> = {
+> => ({
   pendant: {
     title: "Pendant Details",
     icon: <Gem className="w-4 h-4 text-gray-600" />,
     body: (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
-        {pendantDetails.map((item) => (
+        {getPendantDetails(centerStoneShape, centerStoneShapeIconSvg).map(
+          (item) => (
           <div key={item.label}>
             <div className="text-xs uppercase tracking-wide text-gray-400">
               {item.label}
@@ -83,11 +113,13 @@ export const accordionContent: Record<
       </p>
     ),
   },
-};
+});
 
 // 石头 more info 场景下使用的 Diamond Details 样式
 const getDiamondAccordionContent = (
-  stoneDetail: StoneDetailDto | null
+  stoneDetail: StoneDetailDto | null,
+  baseAccordionContent: ReturnType<typeof buildAccordionContent>,
+  certificateLink: string | null
 ): Record<
   AccordionSection,
   { title: string; icon: JSX.Element; body: JSX.Element }
@@ -157,20 +189,26 @@ const getDiamondAccordionContent = (
           <p className="text-[#937D67] text-2xl leading-tight uppercase font-bold">
             {stoneDetail?.type === "lab_grown" ? "Lab Diamond" : "Natural Diamond"}
           </p>
-          <a
-            className="cursor-pointer text-gray-600 text-base leading-tight font-medium mt-2 underline hover:text-gray-900 transition"
-            href={`https://www.gia.edu/report-check?reportno=${stoneDetail?.externalReportNo || stoneDetail?.externalCertNo || ""}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            View Certificate
-          </a>
+          {certificateLink ? (
+            <a
+              className="cursor-pointer text-gray-600 text-base leading-tight font-medium mt-2 underline hover:text-gray-900 transition"
+              href={certificateLink}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View Certificate
+            </a>
+          ) : (
+            <span className="text-gray-400 text-sm mt-2">
+              Certificate unavailable
+            </span>
+          )}
         </div>
       </div>
     ),
   },
-  shipping: accordionContent.shipping,
-  returns: accordionContent.returns,
+  shipping: baseAccordionContent.shipping,
+  returns: baseAccordionContent.returns,
 });
 
 const stepOneStats = [
@@ -188,6 +226,8 @@ interface ProductDetailsProps {
   primaryActionLabel?: string;
   showBuySettingButton?: boolean;
   stoneDetail?: StoneDetailDto | null;
+  centerStoneShape?: string | null;
+  lockCenterStoneShape?: boolean;
 }
 
 export default function ProductDetails({
@@ -196,10 +236,13 @@ export default function ProductDetails({
   primaryActionLabel,
   showBuySettingButton = true,
   stoneDetail,
+  centerStoneShape,
+  lockCenterStoneShape = false,
 }: ProductDetailsProps) {
-  const [selectedShape, setSelectedShape] = useState("Round");
+  const [selectedShape, setSelectedShape] = useState(
+    centerStoneShape?.trim() || "Round"
+  );
   const [selectedMetalId, setSelectedMetalId] = useState<number | null>(null);
-  const [showMoreShapes, setShowMoreShapes] = useState(false);
   const [showMoreMetals, setShowMoreMetals] = useState(false);
   const [openSections, setOpenSections] = useState<
     Record<AccordionSection, boolean>
@@ -213,6 +256,7 @@ export default function ProductDetails({
   const [shapes, setShapes] = useState<StoneFilterOption[]>([]);
   const [materials, setMaterials] = useState<MaterialDto[]>([]);
   const [loading, setLoading] = useState(false);
+  const certificateLink = buildCertificateLink(stoneDetail);
 
   useEffect(() => {
     if (isStepOneVariant) return; // 步骤一不需要加载这些数据
@@ -228,7 +272,7 @@ export default function ProductDetails({
         setShapes(shapesData.shapes || []);
         setMaterials(materialsData || []);
 
-        if (shapesData.shapes?.length > 0 && !selectedShape) {
+        if (!lockCenterStoneShape && shapesData.shapes?.length > 0 && !selectedShape) {
           setSelectedShape(shapesData.shapes[0].label);
         }
         if (materialsData?.length > 0 && selectedMetalId === null) {
@@ -242,7 +286,13 @@ export default function ProductDetails({
     };
 
     loadFilters();
-  }, [isStepOneVariant, selectedShape, selectedMetalId]);
+  }, [isStepOneVariant, selectedShape, selectedMetalId, lockCenterStoneShape]);
+
+  useEffect(() => {
+    if (lockCenterStoneShape && centerStoneShape) {
+      setSelectedShape(centerStoneShape);
+    }
+  }, [lockCenterStoneShape, centerStoneShape]);
 
   const formatDimension = (value?: number) =>
     value !== undefined && value !== null ? value.toFixed(2) : "-";
@@ -263,8 +313,26 @@ export default function ProductDetails({
       ]
     : stepOneStats;
 
-const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
+  const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
   const primaryLabel = primaryActionLabel ?? "Add Center Stone";
+  const shapeLabel = lockCenterStoneShape
+    ? centerStoneShape?.trim() || "—"
+    : centerStoneShape?.trim() || selectedShape;
+  const selectedShapeIconSvg = useMemo(() => {
+    if (!shapeLabel || shapeLabel === "—") return null;
+    const normalized = shapeLabel.toLowerCase();
+    const match = shapes.find(
+      (shape) =>
+        shape.label?.toLowerCase() === normalized ||
+        shape.code?.toLowerCase() === normalized
+    );
+    return match?.iconSvg ?? null;
+  }, [shapeLabel, shapes]);
+
+  const baseAccordionContent = buildAccordionContent(
+    shapeLabel,
+    selectedShapeIconSvg
+  );
 
   const primaryShapes = [
     {
@@ -495,70 +563,29 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
           <div className="mb-6">
             <h3 className="font-semibold mb-3">
               Center Stone Shape:{" "}
-              <span className="font-normal">{selectedShape}</span>
+              <span className="font-normal">{shapeLabel}</span>
             </h3>
             <div className="flex gap-2 flex-wrap">
-              {shapes.slice(0, 4).map((shape) => (
-                <button
-                  key={shape.code}
-                  onClick={() => setSelectedShape(shape.label)}
-                  className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
-                    selectedShape === shape.label
-                      ? "border-black bg-gray-50"
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}
-                >
-                  {shape.iconSvg ? (
-                    <div
-                      className="mb-1 w-8 h-8"
-                      dangerouslySetInnerHTML={{ __html: shape.iconSvg }}
-                    />
-                  ) : (
-                    <div className="mb-1 w-8 h-8 flex items-center justify-center text-gray-400">
-                      ◆
-                    </div>
-                  )}
-                  <span className="text-xs">{shape.label}</span>
-                </button>
-              ))}
-              {shapes.length > 4 && (
-                <button
-                  className="flex items-center justify-center w-20 h-20 border-2 border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
-                  onClick={() => setShowMoreShapes((prev) => !prev)}
-                >
-                  <span className="text-2xl text-gray-400">
-                    {showMoreShapes ? "−" : "+"}
-                  </span>
-                </button>
-              )}
-            </div>
-            {showMoreShapes && shapes.length > 4 && (
-              <div className="flex gap-2 flex-wrap mt-3">
-                {shapes.slice(4).map((shape) => (
-                  <button
-                    key={shape.code}
-                    onClick={() => setSelectedShape(shape.label)}
-                    className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
-                      selectedShape === shape.label
-                        ? "border-black bg-gray-50"
-                        : "border-gray-300 hover:border-gray-400"
-                    }`}
-                  >
-                    {shape.iconSvg ? (
-                      <div
-                        className="mb-1 w-8 h-8"
-                        dangerouslySetInnerHTML={{ __html: shape.iconSvg }}
-                      />
-                    ) : (
-                      <div className="mb-1 w-8 h-8 flex items-center justify-center text-gray-400">
-                        ◆
-                      </div>
-                    )}
-                    <span className="text-xs">{shape.label}</span>
-                  </button>
-                ))}
+              <div
+                className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg ${
+                  shapeLabel === "—"
+                    ? "border-gray-300"
+                    : "border-black bg-gray-50"
+                }`}
+              >
+                {selectedShapeIconSvg ? (
+                  <div
+                    className="mb-1 w-8 h-8"
+                    dangerouslySetInnerHTML={{ __html: selectedShapeIconSvg }}
+                  />
+                ) : (
+                  <div className="mb-1 w-8 h-8 flex items-center justify-center text-gray-400">
+                    ◆
+                  </div>
+                )}
+                <span className="text-xs">{shapeLabel}</span>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Material */}
@@ -912,8 +939,12 @@ const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
         {accordionOrder.map((key) => {
           const item = (
             isStepOneVariant
-          ? getDiamondAccordionContent(stoneDetail ?? null)
-              : accordionContent
+              ? getDiamondAccordionContent(
+                  stoneDetail ?? null,
+                  baseAccordionContent,
+                  certificateLink
+                )
+              : baseAccordionContent
           )[key];
           const isOpen = openSections[key];
 

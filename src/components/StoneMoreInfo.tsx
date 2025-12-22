@@ -13,6 +13,7 @@ interface StoneMoreInfoProps {
   onBack: () => void;
   detailSource?: 1 | 2;
   onAddSetting?: () => void;
+  centerStoneShape?: string | null;
 }
 
 export default function StoneMoreInfo({
@@ -21,6 +22,7 @@ export default function StoneMoreInfo({
   onBack,
   detailSource,
   onAddSetting,
+  centerStoneShape,
 }: StoneMoreInfoProps) {
   const isStepOneDetails = detailSource === 1;
   const [stoneDetail, setStoneDetail] = useState<StoneDetailDto | null>(null);
@@ -78,6 +80,8 @@ export default function StoneMoreInfo({
         primaryActionLabel={isStepOneDetails ? "Add Setting" : undefined}
         showBuySettingButton={!isStepOneDetails}
         stoneDetail={stoneDetail}
+        centerStoneShape={centerStoneShape}
+        lockCenterStoneShape={detailSource === 2}
       />
       <VirtualAppointment />
     </div>

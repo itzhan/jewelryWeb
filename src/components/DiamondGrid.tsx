@@ -7,15 +7,23 @@ import { fetchStones, type BackendStoneItem } from "@/lib/backend";
 interface DiamondGridProps {
   stoneType: "natural" | "labGrown";
   selectedShape: string;
+  selectedShapeCode?: string;
   filters: StoneFilters;
   currentPage: number;
   pageSize: number;
   sortBy: "default" | "price_asc" | "price_desc";
-  nameQuery?: string;
   onMoreInfo?: (stone: BackendStoneItem) => void;
   // 点击「Add pendant」时，将当前 diamond 信息回调给上层，便于后续步骤使用
   onAddPendant?: (stone: BackendStoneItem) => void;
   onTotalCountChange?: (total: number) => void;
+  onPaginationChange?: (meta: {
+    total?: number;
+    page: number;
+    pageSize: number;
+    count: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  }) => void;
   shapeIconSvgMap?: Map<string, string | undefined>;
   selectedStoneId?: number | null;
 }
@@ -44,12 +52,13 @@ export default function DiamondGrid({
   currentPage,
   pageSize,
   sortBy,
-  nameQuery,
   onMoreInfo,
   onAddPendant,
   onTotalCountChange,
+  onPaginationChange,
   shapeIconSvgMap,
   selectedStoneId,
+  selectedShapeCode,
 }: DiamondGridProps) {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [stones, setStones] = useState<BackendStoneItem[]>([]);
@@ -60,9 +69,11 @@ export default function DiamondGrid({
       setLoading(true);
       try {
         const apiType = stoneType === "labGrown" ? "lab_grown" : "natural";
-        const shapeCode = Object.entries(shapeLabelMap).find(
-          ([, label]) => label === selectedShape
-        )?.[0];
+        const shapeCode =
+          selectedShapeCode ||
+          Object.entries(shapeLabelMap).find(
+            ([, label]) => label === selectedShape
+          )?.[0];
 
         // 只获取抛光等级为excellent的石头 (E、EX、ID、2EX、I)
         const excellentPolishValues = ["E", "EX", "ID", "2EX", "I"];
@@ -81,24 +92,60 @@ export default function DiamondGrid({
           minBudget: filters.budget?.min,
           maxBudget: filters.budget?.max,
           certificate: filters.certificate,
-          name: nameQuery?.trim() || undefined,
           ...(sortBy !== "default" && { sortBy: sortBy }),
         });
-        setStones(result.data || []);
-        if (result.meta?.pagination) {
-          onTotalCountChange?.(result.meta.pagination.total);
+        const nextStones = result.data || [];
+        setStones(nextStones);
+        const pagination = result.meta?.pagination;
+        const total = pagination?.total;
+        const page = pagination?.page ?? currentPage;
+        const resolvedPageSize = pagination?.pageSize ?? pageSize;
+        const count = nextStones.length;
+        const hasNext =
+          typeof total === "number"
+            ? page * resolvedPageSize < total
+            : count === pageSize;
+        const hasPrev = page > 1;
+
+        if (typeof total === "number") {
+          onTotalCountChange?.(total);
         }
+        onPaginationChange?.({
+          total,
+          page,
+          pageSize: resolvedPageSize,
+          count,
+          hasNext,
+          hasPrev,
+        });
       } catch (e) {
         console.error("加载石头列表失败", e);
         setStones([]);
         onTotalCountChange?.(0);
+        onPaginationChange?.({
+          total: 0,
+          page: currentPage,
+          pageSize,
+          count: 0,
+          hasNext: false,
+          hasPrev: currentPage > 1,
+        });
       } finally {
         setLoading(false);
       }
     };
 
     load();
-  }, [stoneType, selectedShape, filters, currentPage, pageSize, sortBy, nameQuery, onTotalCountChange]);
+  }, [
+    stoneType,
+    selectedShape,
+    selectedShapeCode,
+    filters,
+    currentPage,
+    pageSize,
+    sortBy,
+    onTotalCountChange,
+  ]);
 
   const toggleFavorite = (id: number) => {
     setFavorites((prev) =>

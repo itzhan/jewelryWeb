@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   useSearchParams,
   useRouter,
-  type ReadonlyURLSearchParams,
+  usePathname,
 } from "next/navigation";
 import CustomizationSteps from "@/components/CustomizationSteps";
 import StoneSelectionSection, {
@@ -91,30 +91,21 @@ const choiceProductIndex: Record<SettingChoice, number> = {
 
 type StepNumber = 1 | 2 | 3;
 type StepIntent = "select" | "change" | "view" | "card" | undefined;
-const normalizeStepFromSearchParams = (
-  params: ReadonlyURLSearchParams
-): StepNumber => {
-  const rawValue = params.get("step");
-  if (!rawValue) {
-    return 1;
+const BASE_PATH = "/design-studio";
+
+const parseSettingChoice = (
+  value: string | null | undefined
+): SettingChoice | null => {
+  if (!value) return null;
+  if (value === "necklace" || value === "ring" || value === "earring") {
+    return value;
   }
-  const parsed = Number(rawValue);
-  if (Number.isNaN(parsed) || parsed < 1 || parsed > 3) {
-    return 1;
-  }
-  return parsed as StepNumber;
+  return null;
 };
 
-// 序列化数组为URL参数（逗号分隔）
-const serializeArrayParam = (arr: string[] | undefined): string | null => {
-  if (!arr || arr.length === 0) return null;
-  return arr.join(",");
-};
-
-// 从URL反序列化数组参数
-const deserializeArrayParam = (param: string | null): string[] | null => {
-  if (!param || param.trim() === "") return null;
-  return param.split(",").filter(Boolean);
+const normalizeStepFromRoute = (step: number | null): StepNumber => {
+  if (!step || step < 1 || step > 3) return 1;
+  return step as StepNumber;
 };
 
 // localStorage key
@@ -169,17 +160,62 @@ const loadFiltersFromStorage = (): {
 export default function StepExperience() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const stoneIdFromUrl = useMemo(
-    () => parseUrlIntParam(searchParams.get("stoneId")),
-    [searchParams],
-  );
-  const productIdFromUrl = useMemo(
-    () => parseUrlIntParam(searchParams.get("productId")),
-    [searchParams],
-  );
+  const pathname = usePathname();
+
+  const routeState = useMemo(() => {
+    const segments = pathname.split("?")[0].split("/").filter(Boolean);
+    let step: StepNumber = 1;
+    let detailContext: StepNumber | null = null;
+    let stoneId: number | null = null;
+    let productId: number | null = null;
+    let settingChoice: SettingChoice | null = null;
+
+    if (segments[0] === BASE_PATH.replace("/", "")) {
+      const section = segments[1];
+      if (section === "stone") {
+        step = 1;
+        const id = parseUrlIntParam(segments[2] ?? null);
+        if (id) {
+          stoneId = id;
+          detailContext = 1;
+        }
+      } else if (section === "setting") {
+        step = 2;
+        settingChoice = parseSettingChoice(segments[2] ?? null);
+        const id = parseUrlIntParam(segments[3] ?? null);
+        if (id) {
+          productId = id;
+          detailContext = 2;
+        }
+      } else if (section === "summary") {
+        step = 3;
+        settingChoice = parseSettingChoice(segments[2] ?? null);
+      }
+    }
+
+    const stoneFromQuery =
+      parseUrlIntParam(searchParams.get("stone")) ??
+      parseUrlIntParam(searchParams.get("stoneId"));
+    const productFromQuery =
+      parseUrlIntParam(searchParams.get("product")) ??
+      parseUrlIntParam(searchParams.get("productId"));
+    const settingFromQuery = parseSettingChoice(searchParams.get("setting"));
+
+    return {
+      step: normalizeStepFromRoute(step),
+      detailContext,
+      stoneId: stoneId ?? stoneFromQuery,
+      productId: productId ?? productFromQuery,
+      settingChoice: settingChoice ?? settingFromQuery,
+    };
+  }, [pathname, searchParams]);
+
+  const stoneIdFromUrl = routeState.stoneId;
+  const productIdFromUrl = routeState.productId;
+  const settingChoiceFromUrl = routeState.settingChoice;
 
   const [activeStep, setActiveStep] = useState<StepNumber>(() =>
-    normalizeStepFromSearchParams(searchParams)
+    routeState.step
   );
   const [detailContext, setDetailContext] = useState<StepNumber | null>(null);
   const [products, setProducts] = useState<StepOneProduct[]>([]);
@@ -209,37 +245,43 @@ export default function StepExperience() {
   >(undefined);
   const [currentPageFromUrl, setCurrentPageFromUrl] = useState<number>(1);
   const [sortByFromUrl, setSortByFromUrl] = useState<"default" | "price_asc" | "price_desc">("default");
-  const [settingChoiceFromUrl, setSettingChoiceFromUrl] = useState<SettingChoice | null>(null);
 
   // 更新 URL 参数的辅助函数
-  const updateURL = (params: Record<string, string | number | null>) => {
-    const newParams = new URLSearchParams(searchParams.toString());
-
-    Object.entries(params).forEach(([key, value]) => {
-      if (value === null || value === undefined || value === "") {
-        newParams.delete(key);
-      } else {
-        newParams.set(key, String(value));
-      }
-    });
-
-    router.push(`?${newParams.toString()}`, { scroll: false });
+  const buildPath = (segments: Array<string | number | null | undefined>) => {
+    const normalized = segments
+      .filter((segment) => segment !== null && segment !== undefined)
+      .map((segment) =>
+        String(segment).trim().replace(/^\/+|\/+$/g, "")
+      )
+      .filter((segment) => segment.length > 0);
+    return `/${normalized.join("/")}`;
   };
 
-  // 在客户端挂载后从 URL 读取参数并更新状态
+  const buildQuery = (params: Record<string, string | number | null | undefined>) => {
+    const newParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === "") return;
+      newParams.set(key, String(value));
+    });
+    const query = newParams.toString();
+    return query ? `?${query}` : "";
+  };
+
+  const navigateTo = (
+    segments: Array<string | number | null | undefined>,
+    params: Record<string, string | number | null | undefined> = {}
+  ) => {
+    const path = buildPath(segments);
+    const query = buildQuery(params);
+    router.push(`${path}${query}`, { scroll: false });
+  };
+
+  // 根据路由变化更新步骤
   useEffect(() => {
-    const urlStep = normalizeStepFromSearchParams(searchParams);
-    const urlStoneId = searchParams.get("stoneId");
-    const urlProductId = searchParams.get("productId");
-
-    if (urlStep !== activeStep) {
-      setActiveStep(urlStep);
+    if (routeState.step !== activeStep) {
+      setActiveStep(routeState.step);
     }
-
-    // 如果 URL 有 stoneId 或 productId，需要加载对应的数据
-    // 这部分逻辑后续可以在 loadProducts 中处理
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]); // 仅在 searchParams 变化时执行，不依赖 activeStep 避免循环
+  }, [routeState.step, activeStep]);
 
   // 从 localStorage 恢复石头筛选条件
   useEffect(() => {
@@ -278,32 +320,32 @@ export default function StepExperience() {
     }
   }, [activeStep]);
 
-  // 从 URL 恢复第三步的设置类型
+  // 从 URL 恢复设置类型
   useEffect(() => {
-    if (activeStep !== 3) return;
-
-    const choice = searchParams.get("setting");
-    if (choice && (choice === "necklace" || choice === "ring" || choice === "earring")) {
-      setSettingChoiceFromUrl(choice as SettingChoice);
-      // 如果从URL直接访问第三步，设置isProductConfirmed为true以显示内容
-      if (!isProductConfirmed && selectedProduct) {
+    if (settingChoiceFromUrl) {
+      if (settingChoice !== settingChoiceFromUrl) {
+        setSettingChoice(settingChoiceFromUrl);
+      }
+      if (activeStep === 3 && !isProductConfirmed && selectedProduct) {
         setIsProductConfirmed(true);
       }
     }
-  }, [searchParams, activeStep, isProductConfirmed, selectedProduct]);
+  }, [
+    settingChoiceFromUrl,
+    settingChoice,
+    activeStep,
+    isProductConfirmed,
+    selectedProduct,
+  ]);
 
   // 从 URL 恢复详情页面状态
   useEffect(() => {
-    const stoneId = searchParams.get("stoneId");
-    const productId = searchParams.get("productId");
-    const viewMode = searchParams.get("view");
-
-    if (stoneId && activeStep === 1) {
-      setDetailContext(1);
-    } else if (productId && activeStep === 2 && viewMode === "product") {
-      setDetailContext(2);
+    if (routeState.detailContext) {
+      setDetailContext(routeState.detailContext);
+      return;
     }
-  }, [searchParams, activeStep]);
+    setDetailContext(null);
+  }, [routeState.detailContext]);
 
   useEffect(() => {
     if (detailContext && detailContext !== activeStep) {
@@ -394,12 +436,57 @@ export default function StepExperience() {
     };
   }, [productIdFromUrl, products, selectedProduct?.id]);
 
-  const goToStep = (
+  const navigateStep = (
     step: StepNumber,
-    extraParams?: Record<string, string | number | null>
+    options: {
+      stoneId?: number | null;
+      productId?: number | null;
+      settingChoice?: SettingChoice | null;
+      detail?: StepNumber | null;
+    } = {}
   ) => {
     setActiveStep(step);
-    updateURL({ step, ...(extraParams || {}) });
+    const stoneId = options.stoneId ?? stoneIdFromUrl ?? selectedStone?.id ?? null;
+    const productId =
+      options.productId ?? productIdFromUrl ?? selectedProduct?.id ?? null;
+    const effectiveSetting =
+      options.settingChoice ?? settingChoice ?? settingChoiceFromUrl ?? null;
+
+    if (step === 1) {
+      if (options.detail === 1 && stoneId) {
+        navigateTo([BASE_PATH, "stone", stoneId], {});
+        return;
+      }
+      navigateTo([BASE_PATH, "stone"], {
+        stone: stoneId ?? null,
+      });
+      return;
+    }
+
+    if (step === 2) {
+      const segments: Array<string | number | null> = [
+        BASE_PATH,
+        "setting",
+        effectiveSetting,
+      ];
+      const canShowDetail =
+        options.detail === 2 && productId && Boolean(effectiveSetting);
+      if (canShowDetail) {
+        segments.push(productId);
+      }
+      navigateTo(segments, {
+        stone: stoneId ?? null,
+        product: canShowDetail ? null : productId ?? null,
+      });
+      return;
+    }
+
+    if (step === 3) {
+      navigateTo([BASE_PATH, "summary", effectiveSetting], {
+        stone: stoneId ?? null,
+        product: productId ?? null,
+      });
+    }
   };
 
   const handleStoneMoreInfo = (stone: BackendStoneItem) => {
@@ -407,10 +494,7 @@ export default function StepExperience() {
     setSelectedProduct((prev) => prev ?? products[0] ?? null);
     setDetailContext(1);
     setStepOneEntry("detail");
-    updateURL({
-      stoneId: stone.id,
-      step: 1,
-    });
+    navigateStep(1, { stoneId: stone.id, detail: 1 });
     window.scrollTo({ top: 0, behavior: "auto" });
   };
 
@@ -419,10 +503,11 @@ export default function StepExperience() {
     setIsProductConfirmed(false);
     setShouldShowProductDetailOnReturn(false);
     setDetailContext(2);
-    updateURL({
+    navigateStep(2, {
       productId: product.id,
-      step: 2,
-      view: "product",
+      stoneId: selectedStone?.id ?? stoneIdFromUrl ?? null,
+      settingChoice: settingChoice ?? settingChoiceFromUrl ?? null,
+      detail: 2,
     });
     window.scrollTo({ top: 0, behavior: "auto" });
   };
@@ -431,7 +516,7 @@ export default function StepExperience() {
   const handleStoneAddPendantFromGrid = (stone: BackendStoneItem) => {
     setSelectedStone(stone);
     setStepOneEntry("grid");
-    updateURL({ stoneId: stone.id, step: 1 });
+    navigateStep(1, { stoneId: stone.id });
     setIsTypeSelectionOpen(true);
   };
 
@@ -447,10 +532,10 @@ export default function StepExperience() {
     setSettingChoice("ring");
     setIsProductConfirmed(true);
     setShouldShowProductDetailOnReturn(true);
-    goToStep(3, {
+    navigateStep(3, {
       productId: product.id,
       stoneId: selectedStone?.id ?? null,
-      setting: "ring",
+      settingChoice: "ring",
     });
   };
 
@@ -466,9 +551,9 @@ export default function StepExperience() {
     const preferredProduct =
       products[choiceProductIndex[choice]] ?? products[0] ?? null;
     setSelectedProduct(preferredProduct);
-    goToStep(2, {
+    navigateStep(2, {
       stoneId: selectedStone?.id ?? null,
-      setting: choice,
+      settingChoice: choice,
     });
     // 滚动到页面顶部
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -483,10 +568,10 @@ export default function StepExperience() {
     setDetailContext(null);
     setIsProductConfirmed(true);
     setShouldShowProductDetailOnReturn(true);
-    goToStep(3, {
+    navigateStep(3, {
       productId: selectedProduct?.id ?? null,
       stoneId: selectedStone?.id ?? null,
-      setting: settingChoice,
+      settingChoice: settingChoice,
     });
   };
 
@@ -498,8 +583,17 @@ export default function StepExperience() {
       }
       return null;
     });
-    // 清除 URL 中的详情相关参数
-    updateURL({ stoneId: null, productId: null, view: null });
+    if (detailContext === 1) {
+      navigateStep(1, { stoneId: selectedStone?.id ?? stoneIdFromUrl ?? null });
+      return;
+    }
+    if (detailContext === 2) {
+      navigateStep(2, {
+        stoneId: selectedStone?.id ?? stoneIdFromUrl ?? null,
+        settingChoice: settingChoice ?? settingChoiceFromUrl ?? null,
+        productId: selectedProduct?.id ?? productIdFromUrl ?? null,
+      });
+    }
   };
 
   const handleShapePersist = (shape: string) => {
@@ -571,9 +665,8 @@ export default function StepExperience() {
       if (isChangeIntent) {
         setStepOneEntry("grid");
       }
-      goToStep(1, {
+      navigateStep(1, {
         stoneId: selectedStone?.id ?? null,
-        productId: needResetStepTwo ? null : selectedProduct?.id ?? null,
       });
       return;
     }
@@ -595,10 +688,11 @@ export default function StepExperience() {
       if (intent === "view") {
         setShouldShowProductDetailOnReturn(false);
       }
-      goToStep(2, {
+      navigateStep(2, {
         stoneId: selectedStone?.id ?? null,
         productId: selectedProduct?.id ?? null,
-        setting: settingChoice,
+        settingChoice: settingChoice,
+        detail: showProductDetail ? 2 : null,
       });
       return;
     }
@@ -610,10 +704,10 @@ export default function StepExperience() {
         return;
       }
       setDetailContext(null);
-      goToStep(3, {
+      navigateStep(3, {
         productId: selectedProduct?.id ?? productIdFromUrl ?? null,
         stoneId: selectedStone?.id ?? stoneIdFromUrl ?? null,
-        setting: settingChoice ?? settingChoiceFromUrl,
+        settingChoice: settingChoice ?? settingChoiceFromUrl,
       });
     }
   };
@@ -631,6 +725,7 @@ export default function StepExperience() {
         onAddSetting={
           detailContext === 1 ? handleStoneAddPendant : handleGoToStepThree
         }
+        centerStoneShape={selectedStone?.shape ?? null}
       />
     );
   } else if (activeStep === 1) {

@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { SettingChoice } from "@/components/AddSettingModal";
 import {
-  accordionContent,
+  buildAccordionContent,
   accordionOrder,
   AccordionSection,
   knowSettingStats,
@@ -67,6 +67,10 @@ export default function ProductContainer({
   const stoneShapeIcon = useMemo(
     () => stone?.shapeIconSvg ?? stoneIconSvg ?? shapeIconFromFilters ?? null,
     [stone?.shapeIconSvg, stoneIconSvg, shapeIconFromFilters]
+  );
+  const accordionContent = useMemo(
+    () => buildAccordionContent(stone?.shape ?? null, stoneShapeIcon),
+    [stone?.shape, stoneShapeIcon]
   );
 
   const productImages = useMemo(() => {

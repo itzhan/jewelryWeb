@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import ProductDetails from "./ProductDetails";
 import type { StoneDetailDto } from "@/lib/backend";
-import {
-  resolveBackendImageUrl,
-  fetchCertificateImageLink,
-} from "@/lib/backend";
+import { resolveBackendImageUrl } from "@/lib/backend";
+import { buildCertificateLink } from "@/lib/certificate";
 
 type GalleryImage = {
   url: string;
@@ -50,6 +47,8 @@ type ProductSectionProps = {
   showBuySettingButton?: boolean;
   stoneDetail?: StoneDetailDto | null;
   productImages?: GalleryImage[];
+  centerStoneShape?: string | null;
+  lockCenterStoneShape?: boolean;
 };
 
 export default function ProductSection({
@@ -59,64 +58,10 @@ export default function ProductSection({
   showBuySettingButton = true,
   stoneDetail,
   productImages,
+  centerStoneShape,
+  lockCenterStoneShape = false,
 }: ProductSectionProps) {
-  const [certificateLink, setCertificateLink] = useState<string | null>(null);
-  const [certificateError, setCertificateError] = useState<string | null>(null);
-  const [isCertificateLinkLoading, setIsCertificateLinkLoading] =
-    useState(false);
-
-  useEffect(() => {
-    let isActive = true;
-
-    if (!stoneDetail) {
-      setCertificateLink(null);
-      setCertificateError(null);
-      setIsCertificateLinkLoading(false);
-      return;
-    }
-
-    const certNo =
-      stoneDetail.externalReportNo || stoneDetail.externalCertNo || "";
-    if (!certNo) {
-      setCertificateLink(null);
-      setCertificateError(null);
-      setIsCertificateLinkLoading(false);
-      return;
-    }
-
-    setCertificateLink(null);
-    setCertificateError(null);
-    setIsCertificateLinkLoading(true);
-
-    fetchCertificateImageLink({
-      certNo,
-      type: 1,
-      cert: stoneDetail.externalCertType,
-    })
-      .then((url) => {
-        if (!isActive) return;
-        setCertificateLink(url);
-      })
-      .catch((error) => {
-        if (!isActive) return;
-        console.error("获取证书链接失败", error);
-        setCertificateLink(null);
-        setCertificateError("证书链接加载失败");
-      })
-      .finally(() => {
-        if (!isActive) return;
-        setIsCertificateLinkLoading(false);
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [
-    stoneDetail?.externalReportNo,
-    stoneDetail?.externalCertNo,
-    stoneDetail?.externalCertType,
-    stoneDetail,
-  ]);
+  const certificateLink = buildCertificateLink(stoneDetail);
   // 如果是步骤一详情页且有石头数据，使用石头图片；否则使用产品图片或默认图片
   const images =
     isStepOneDetails && stoneDetail?.images?.length
@@ -238,14 +183,6 @@ export default function ProductSection({
                 >
                   View Certificate
                 </a>
-              ) : certificateError ? (
-                <span className="text-gray-400 text-sm mt-2">
-                  {certificateError}
-                </span>
-              ) : isCertificateLinkLoading ? (
-                <span className="text-gray-400 text-sm mt-2">
-                  Loading certificate...
-                </span>
               ) : (
                 <span className="text-gray-400 text-sm mt-2">
                   Certificate unavailable
@@ -291,6 +228,8 @@ export default function ProductSection({
         primaryActionLabel={primaryActionLabel}
         showBuySettingButton={showBuySettingButton}
         stoneDetail={stoneDetail}
+        centerStoneShape={centerStoneShape}
+        lockCenterStoneShape={lockCenterStoneShape}
       />
 
     </div>
