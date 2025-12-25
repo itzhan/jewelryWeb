@@ -30,6 +30,7 @@ const DEFAULT_STEP_ONE_COLORS: StepOneProduct["colors"] = [
   "yellow",
   "rose",
 ];
+const PRODUCTS_PAGE_SIZE = 12;
 
 const parseUrlIntParam = (value: string | null): number | null => {
   if (!value) {
@@ -219,6 +220,9 @@ export default function StepExperience() {
   );
   const [detailContext, setDetailContext] = useState<StepNumber | null>(null);
   const [products, setProducts] = useState<StepOneProduct[]>([]);
+  const [productTotal, setProductTotal] = useState<number | undefined>(undefined);
+  const [productPage, setProductPage] = useState<number>(1);
+  const [productLoading, setProductLoading] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<StepOneProduct | null>(
     null
   );
@@ -354,13 +358,21 @@ export default function StepExperience() {
   }, [activeStep, detailContext]);
 
   useEffect(() => {
+    let cancelled = false;
     const loadProducts = async () => {
+      setProductLoading(true);
       try {
-        const backendProducts = await fetchPendantProducts();
-        const mapped: StepOneProduct[] = backendProducts.map((p) =>
+        const response = await fetchPendantProducts({
+          page: productPage,
+          pageSize: PRODUCTS_PAGE_SIZE,
+        });
+        if (cancelled) return;
+        const mapped: StepOneProduct[] = response.data.map((p) =>
           mapBackendProductToStepOneProduct(p),
         );
+        const total = response.meta?.pagination?.total;
         setProducts(mapped);
+        setProductTotal(typeof total === "number" ? total : undefined);
         const preferredProduct =
           productIdFromUrl != null
             ? mapped.find((item) => item.id === productIdFromUrl)
@@ -369,11 +381,30 @@ export default function StepExperience() {
       } catch (e) {
         // 失败时先不打断流程，保持空列表
         console.error("加载产品列表失败", e);
+        if (!cancelled) {
+          setProducts([]);
+          setProductTotal(0);
+        }
+      } finally {
+        if (!cancelled) {
+          setProductLoading(false);
+        }
       }
     };
 
     loadProducts();
-  }, [productIdFromUrl]);
+    return () => {
+      cancelled = true;
+    };
+  }, [productIdFromUrl, productPage]);
+
+  useEffect(() => {
+    if (typeof productTotal !== "number") return;
+    const maxPage = Math.max(1, Math.ceil(productTotal / PRODUCTS_PAGE_SIZE));
+    if (productPage > maxPage) {
+      setProductPage(maxPage);
+    }
+  }, [productTotal, productPage]);
 
   useEffect(() => {
     if (stoneIdFromUrl == null) {
@@ -422,9 +453,6 @@ export default function StepExperience() {
         const detail = await fetchProductDetail(productIdFromUrl);
         if (cancelled) return;
         const mapped = mapProductDetailToStepOneProduct(detail);
-        setProducts((prev) =>
-          prev.some((item) => item.id === mapped.id) ? prev : [...prev, mapped],
-        );
         setSelectedProduct(mapped);
       } catch (error) {
         console.error("无法从 URL 还原商品信息", error);
@@ -754,6 +782,11 @@ export default function StepExperience() {
       <div>
         <StepOneLanding
           products={products}
+          total={productTotal}
+          currentPage={productPage}
+          pageSize={PRODUCTS_PAGE_SIZE}
+          loading={productLoading}
+          onPageChange={setProductPage}
           onMoreInfo={handlePendantMoreInfo}
           onCompleteRing={handleCompleteRing}
         />

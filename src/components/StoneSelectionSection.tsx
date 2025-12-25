@@ -33,6 +33,7 @@ const BUDGET_STEP = 250;
 const CARAT_MIN = 0.5;
 const CARAT_MAX = 20;
 const CARAT_STEP = 0.1;
+const FILTER_DEBOUNCE_MS = 400;
 
 const clampCaratValue = (value: number) =>
   Math.min(CARAT_MAX, Math.max(CARAT_MIN, value));
@@ -107,6 +108,17 @@ const createDefaultFilters = (options?: {
     budget: { min: 250, max: 5000 },
     certificate: [],
   };
+};
+
+const useDebouncedValue = <T,>(value: T, delay: number) => {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debounced;
 };
 
 const InfoDot = () => (
@@ -217,6 +229,7 @@ export default function StoneSelectionSection({
     undefined
   );
   const [filters, setFilters] = useState<StoneFilters>(() => initialFilters);
+  const debouncedFilters = useDebouncedValue(filters, FILTER_DEBOUNCE_MS);
   const [caratInput, setCaratInput] = useState<{ min: string; max: string }>(
     () => ({
       min: initialFilters.carat.min.toString(),
@@ -1187,7 +1200,7 @@ export default function StoneSelectionSection({
             stoneType={stoneType}
             selectedShape={selectedShape}
             selectedShapeCode={selectedShapeCode}
-            filters={filters}
+            filters={debouncedFilters}
             currentPage={currentPage}
             pageSize={pageSize}
             sortBy={sortBy}

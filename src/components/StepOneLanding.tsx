@@ -14,6 +14,11 @@ export interface StepOneProduct {
 
 interface StepOneLandingProps {
   products: StepOneProduct[];
+  total?: number;
+  currentPage: number;
+  pageSize: number;
+  loading?: boolean;
+  onPageChange: (page: number) => void;
   onMoreInfo: (product: StepOneProduct) => void;
   onCompleteRing: (product: StepOneProduct) => void;
 }
@@ -65,6 +70,11 @@ const buildPaletteGradient = (colors: string[]) => {
 
 export default function StepOneLanding({
   products,
+  total,
+  currentPage,
+  pageSize,
+  loading = false,
+  onPageChange,
   onMoreInfo,
   onCompleteRing,
 }: StepOneLandingProps) {
@@ -372,8 +382,65 @@ export default function StepOneLanding({
           })}
         </div>
 
-        <div className="text-center mt-12 text-sm text-gray-600">
-          Showing {sortedProducts.length} Out Of {products.length}
+        <div className="mt-12 flex flex-col gap-4 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <span>
+              {(() => {
+                const count = sortedProducts.length;
+                const start = count ? (currentPage - 1) * pageSize + 1 : 0;
+                const end = count ? (currentPage - 1) * pageSize + count : 0;
+                const totalLabel =
+                  typeof total === "number" ? total : count ? `${end}+` : 0;
+                return `Showing ${start}-${end} of ${totalLabel}`;
+              })()}
+            </span>
+            {loading && <span className="text-xs text-gray-400">Loading...</span>}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+              disabled={loading || currentPage === 1}
+              aria-label="Previous page"
+            >
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M15 6l-6 6 6 6" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={
+                loading ||
+                (typeof total === "number"
+                  ? currentPage * pageSize >= total
+                  : sortedProducts.length < pageSize)
+              }
+              aria-label="Next page"
+            >
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
