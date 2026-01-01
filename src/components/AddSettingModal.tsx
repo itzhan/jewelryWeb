@@ -79,11 +79,11 @@ export default function AddSettingModal({ open, onClose, onSelect }: AddSettingM
         className="absolute inset-0 bg-black/35 backdrop-blur-sm animate-overlay-fade"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-2xl space-y-6 rounded-[28px] border border-gray-200 bg-white p-8 shadow-[0_30px_60px_rgba(15,23,42,0.25)] animate-modal-pop">
+      <div className="relative w-full max-w-2xl space-y-6 rounded-[28px] border border-gray-200 bg-white p-6 sm:p-8 shadow-[0_30px_60px_rgba(15,23,42,0.25)] animate-modal-pop">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-gray-400">Step 01</p>
-            <h3 className="text-3xl font-semibold tracking-tight text-gray-900">
+            <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900">
               Choose a setting type
             </h3>
           </div>
@@ -99,12 +99,12 @@ export default function AddSettingModal({ open, onClose, onSelect }: AddSettingM
 
         <p className="max-w-2xl text-sm text-gray-500">Choose your setting</p>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           {options.map((option) => (
             <button
               key={option.id}
               type="button"
-              className="group relative flex min-h-[200px] flex-col items-center justify-center gap-4 rounded-[28px] border border-gray-200/80 bg-white/90 p-5 text-center shadow-[0_18px_50px_rgba(15,23,42,0.15)] transition duration-300 ease-out hover:border-black/70 hover:shadow-[0_28px_60px_rgba(15,23,42,0.25)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-black"
+              className="group relative flex min-h-[160px] sm:min-h-[200px] flex-col items-center justify-center gap-4 rounded-[28px] border border-gray-200/80 bg-white/90 p-5 text-center shadow-[0_18px_50px_rgba(15,23,42,0.15)] transition duration-300 ease-out hover:border-black/70 hover:shadow-[0_28px_60px_rgba(15,23,42,0.25)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-black"
               onClick={() => onSelect(option.id, option.iconSvg)}
             >
               <div className="flex flex-col items-center gap-3">
@@ -116,7 +116,7 @@ export default function AddSettingModal({ open, onClose, onSelect }: AddSettingM
                 ) : (
                   option.icon
                 )}
-                <h4 className="text-2xl font-semibold text-gray-900">{option.title}</h4>
+                <h4 className="text-xl sm:text-2xl font-semibold text-gray-900">{option.title}</h4>
               </div>
             </button>
           ))}

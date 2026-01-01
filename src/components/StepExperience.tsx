@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useSearchParams,
   useRouter,
@@ -30,7 +30,6 @@ const DEFAULT_STEP_ONE_COLORS: StepOneProduct["colors"] = [
   "yellow",
   "rose",
 ];
-const PRODUCTS_PAGE_SIZE = 12;
 
 const parseUrlIntParam = (value: string | null): number | null => {
   if (!value) {
@@ -173,7 +172,9 @@ export default function StepExperience() {
 
     if (segments[0] === BASE_PATH.replace("/", "")) {
       const section = segments[1];
-      if (section === "stone") {
+      if (!section) {
+        step = 1;
+      } else if (section === "stone") {
         step = 1;
         const id = parseUrlIntParam(segments[2] ?? null);
         if (id) {
@@ -220,15 +221,16 @@ export default function StepExperience() {
   );
   const [detailContext, setDetailContext] = useState<StepNumber | null>(null);
   const [products, setProducts] = useState<StepOneProduct[]>([]);
-  const [productTotal, setProductTotal] = useState<number | undefined>(undefined);
-  const [productPage, setProductPage] = useState<number>(1);
-  const [productLoading, setProductLoading] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<StepOneProduct | null>(
     null
   );
   const [selectedStone, setSelectedStone] = useState<BackendStoneItem | null>(
     null
   );
+  const [stoneLoading, setStoneLoading] = useState(false);
+  const [detailStoneFallback, setDetailStoneFallback] = useState<BackendStoneItem | null>(null);
+  const [detailProductFallback, setDetailProductFallback] = useState<StepOneProduct | null>(null);
+  const [hasSelectedProduct, setHasSelectedProduct] = useState(false);
   const [settingChoice, setSettingChoice] = useState<SettingChoice | null>(
     null
   );
@@ -249,6 +251,7 @@ export default function StepExperience() {
   >(undefined);
   const [currentPageFromUrl, setCurrentPageFromUrl] = useState<number>(1);
   const [sortByFromUrl, setSortByFromUrl] = useState<"default" | "price_asc" | "price_desc">("default");
+  const [forceDetailHidden, setForceDetailHidden] = useState(false);
 
   // 更新 URL 参数的辅助函数
   const buildPath = (segments: Array<string | number | null | undefined>) => {
@@ -358,81 +361,100 @@ export default function StepExperience() {
   }, [activeStep, detailContext]);
 
   useEffect(() => {
+    if (!routeState.detailContext) {
+      setForceDetailHidden(false);
+    }
+  }, [routeState.detailContext]);
+
+  // 产品列表只加载一次，不依赖 URL 参数（兼容 Strict Mode 双执行）
+  const productsRequestRef = useRef({ fetching: false, fetched: false });
+  useEffect(() => {
+    if (productsRequestRef.current.fetched || productsRequestRef.current.fetching) return;
+    productsRequestRef.current.fetching = true;
+
     let cancelled = false;
+    const clearFetching = () => {
+      if (productsRequestRef.current.fetching) {
+        productsRequestRef.current.fetching = false;
+      }
+    };
+
     const loadProducts = async () => {
-      setProductLoading(true);
       try {
-        const response = await fetchPendantProducts({
-          page: productPage,
-          pageSize: PRODUCTS_PAGE_SIZE,
-        });
+        const backendProducts = await fetchPendantProducts();
         if (cancelled) return;
-        const mapped: StepOneProduct[] = response.data.map((p) =>
+        const mapped: StepOneProduct[] = backendProducts.map((p) =>
           mapBackendProductToStepOneProduct(p),
         );
-        const total = response.meta?.pagination?.total;
         setProducts(mapped);
-        setProductTotal(typeof total === "number" ? total : undefined);
-        const preferredProduct =
-          productIdFromUrl != null
-            ? mapped.find((item) => item.id === productIdFromUrl)
-            : null;
-        setSelectedProduct((prev) => prev ?? preferredProduct ?? mapped[0] ?? null);
+        productsRequestRef.current.fetched = true;
       } catch (e) {
-        // 失败时先不打断流程，保持空列表
         console.error("加载产品列表失败", e);
-        if (!cancelled) {
-          setProducts([]);
-          setProductTotal(0);
-        }
       } finally {
-        if (!cancelled) {
-          setProductLoading(false);
-        }
+        clearFetching();
       }
     };
 
     loadProducts();
     return () => {
       cancelled = true;
+      clearFetching();
     };
-  }, [productIdFromUrl, productPage]);
+  }, []);
+
+  // 石头加载：只在需要从 URL 恢复石头数据时加载（如刷新页面）
+  // 使用 ref 跟踪已请求的石头 ID，防止重复请求
+  const stoneRequestRef = useRef<{ fetching: number | null; fetched: number | null }>({ fetching: null, fetched: null });
 
   useEffect(() => {
-    if (typeof productTotal !== "number") return;
-    const maxPage = Math.max(1, Math.ceil(productTotal / PRODUCTS_PAGE_SIZE));
-    if (productPage > maxPage) {
-      setProductPage(maxPage);
-    }
-  }, [productTotal, productPage]);
-
-  useEffect(() => {
+    // 没有 URL 中的石头 ID，不需要加载
     if (stoneIdFromUrl == null) {
       return;
     }
-    if (selectedStone?.id === stoneIdFromUrl) {
+
+    // 已经请求过或正在请求这个石头，跳过
+    if (stoneRequestRef.current.fetched === stoneIdFromUrl || stoneRequestRef.current.fetching === stoneIdFromUrl) {
       return;
     }
 
+    stoneRequestRef.current.fetching = stoneIdFromUrl;
     let cancelled = false;
+    const clearFetching = () => {
+      if (stoneRequestRef.current.fetching === stoneIdFromUrl) {
+        stoneRequestRef.current.fetching = null;
+      }
+    };
+
     (async () => {
+      setStoneLoading(true);
       try {
         const detail = await fetchStoneDetail(stoneIdFromUrl);
         if (cancelled) return;
+        stoneRequestRef.current.fetched = stoneIdFromUrl;
+        clearFetching();
         setSelectedStone(detail);
-        if (activeStep === 1) {
-          setDetailContext((prev) => (prev ?? 1));
-          setStepOneEntry((prev) => (prev === "detail" ? prev : "detail"));
+        setDetailStoneFallback(detail);
+        // 如果 URL 包含石头详情页路径，设置详情页上下文
+        if (routeState.detailContext === 1) {
+          setDetailContext(1);
+          setStepOneEntry("detail");
         }
       } catch (error) {
         console.error("无法从 URL 还原石头信息", error);
+        clearFetching();
+      } finally {
+        clearFetching();
+        if (!cancelled) {
+          setStoneLoading(false);
+        }
       }
     })();
 
     return () => {
       cancelled = true;
+      clearFetching();
     };
-  }, [stoneIdFromUrl, selectedStone?.id, activeStep]);
+  }, [stoneIdFromUrl, routeState.detailContext]);
 
   useEffect(() => {
     if (productIdFromUrl == null) {
@@ -444,6 +466,7 @@ export default function StepExperience() {
     const persisted = products.find((item) => item.id === productIdFromUrl);
     if (persisted) {
       setSelectedProduct(persisted);
+      setHasSelectedProduct(true);
       return;
     }
 
@@ -453,7 +476,11 @@ export default function StepExperience() {
         const detail = await fetchProductDetail(productIdFromUrl);
         if (cancelled) return;
         const mapped = mapProductDetailToStepOneProduct(detail);
+        setProducts((prev) =>
+          prev.some((item) => item.id === mapped.id) ? prev : [...prev, mapped],
+        );
         setSelectedProduct(mapped);
+        setHasSelectedProduct(true);
       } catch (error) {
         console.error("无法从 URL 还原商品信息", error);
       }
@@ -485,9 +512,7 @@ export default function StepExperience() {
         navigateTo([BASE_PATH, "stone", stoneId], {});
         return;
       }
-      navigateTo([BASE_PATH, "stone"], {
-        stone: stoneId ?? null,
-      });
+      navigateTo([BASE_PATH], {});
       return;
     }
 
@@ -502,10 +527,7 @@ export default function StepExperience() {
       if (canShowDetail) {
         segments.push(productId);
       }
-      navigateTo(segments, {
-        stone: stoneId ?? null,
-        product: canShowDetail ? null : productId ?? null,
-      });
+      navigateTo(segments, {});
       return;
     }
 
@@ -518,8 +540,12 @@ export default function StepExperience() {
   };
 
   const handleStoneMoreInfo = (stone: BackendStoneItem) => {
+    // 标记此石头已有数据，防止 useEffect 重复请求
+    stoneRequestRef.current.fetched = stone.id;
+    // 同时设置 selectedStone 和 detailStoneFallback，确保数据立即可用
     setSelectedStone(stone);
-    setSelectedProduct((prev) => prev ?? products[0] ?? null);
+    setDetailStoneFallback(stone);
+    setForceDetailHidden(false);
     setDetailContext(1);
     setStepOneEntry("detail");
     navigateStep(1, { stoneId: stone.id, detail: 1 });
@@ -528,6 +554,9 @@ export default function StepExperience() {
 
   const handlePendantMoreInfo = (product: StepOneProduct) => {
     setSelectedProduct(product);
+    setDetailProductFallback(product);
+    setHasSelectedProduct(true);
+    setForceDetailHidden(false);
     setIsProductConfirmed(false);
     setShouldShowProductDetailOnReturn(false);
     setDetailContext(2);
@@ -558,6 +587,7 @@ export default function StepExperience() {
     setSelectedProduct(product);
     setDetailContext(null);
     setSettingChoice("ring");
+    setHasSelectedProduct(true);
     setIsProductConfirmed(true);
     setShouldShowProductDetailOnReturn(true);
     navigateStep(3, {
@@ -569,13 +599,14 @@ export default function StepExperience() {
 
   const handleTypeSelected = (choice: SettingChoice, iconSvg?: string | null) => {
     setIsTypeSelectionOpen(false);
-    const cameFromDetail = detailContext === 1;
+    const cameFromDetail = (detailContext ?? routeState.detailContext) === 1;
     setDetailContext(null);
     setIsProductConfirmed(false);
     setShouldShowProductDetailOnReturn(false);
     setStepOneEntry(cameFromDetail ? "detail" : "grid");
     setSettingChoice(choice);
     setSettingIconSvg(iconSvg ?? null);
+    setHasSelectedProduct(false);
     const preferredProduct =
       products[choiceProductIndex[choice]] ?? products[0] ?? null;
     setSelectedProduct(preferredProduct);
@@ -594,6 +625,7 @@ export default function StepExperience() {
   const handleGoToStepThree = () => {
     if (!selectedProduct || !settingChoice) return;
     setDetailContext(null);
+    setHasSelectedProduct(true);
     setIsProductConfirmed(true);
     setShouldShowProductDetailOnReturn(true);
     navigateStep(3, {
@@ -604,6 +636,8 @@ export default function StepExperience() {
   };
 
   const handleDetailBack = () => {
+    const currentDetailContext = detailContext ?? routeState.detailContext ?? null;
+    setForceDetailHidden(true);
     setDetailContext((prev) => {
       if (prev === 2) {
         setIsProductConfirmed(false);
@@ -611,11 +645,11 @@ export default function StepExperience() {
       }
       return null;
     });
-    if (detailContext === 1) {
+    if (currentDetailContext === 1) {
       navigateStep(1, { stoneId: selectedStone?.id ?? stoneIdFromUrl ?? null });
       return;
     }
-    if (detailContext === 2) {
+    if (currentDetailContext === 2) {
       navigateStep(2, {
         stoneId: selectedStone?.id ?? stoneIdFromUrl ?? null,
         settingChoice: settingChoice ?? settingChoiceFromUrl ?? null,
@@ -660,14 +694,15 @@ export default function StepExperience() {
     }
   };
 
-  const isDetailVisible =
-    (detailContext === 1 && !!selectedStone) ||
-    (detailContext === 2 && !!selectedProduct);
-  const viewKey = isDetailVisible
-    ? detailContext === 1
-      ? "detail-stone"
-      : "detail-product"
-    : `step-${activeStep}`;
+  const resolvedDetailContext = forceDetailHidden
+    ? null
+    : detailContext ?? routeState.detailContext ?? null;
+  const stepForRender = routeState.step;
+  const isDetailVisible = resolvedDetailContext === 1 || resolvedDetailContext === 2;
+  // 使用稳定的 key，只根据步骤变化，避免详情页切换时组件重新挂载导致闪屏
+  const viewKey = `step-${stepForRender}`;
+  // 优先使用 detailStoneFallback（点击时同步设置），确保数据立即可用
+  const detailStone = detailStoneFallback ?? selectedStone ?? null;
 
   // 包装 setActiveStep，同时更新 URL（用于仅切换步骤场景）
   const changeStep = (step: StepNumber, intent?: StepIntent) => {
@@ -688,6 +723,7 @@ export default function StepExperience() {
         setSettingIconSvg(null);
         setIsProductConfirmed(false);
         setShouldShowProductDetailOnReturn(false);
+        setHasSelectedProduct(false);
       }
       setDetailContext(shouldShowStoneDetail ? 1 : null);
       if (isChangeIntent) {
@@ -712,7 +748,7 @@ export default function StepExperience() {
         !showProductDetail &&
         stepOneEntry === "detail" &&
         !!selectedStone;
-      setDetailContext(showProductDetail ? 2 : showStoneDetail ? 1 : null);
+        setDetailContext(showProductDetail ? 2 : showStoneDetail ? 1 : null);
       if (intent === "view") {
         setShouldShowProductDetailOnReturn(false);
       }
@@ -744,19 +780,22 @@ export default function StepExperience() {
   if (isDetailVisible) {
     content = (
       <StoneMoreInfo
-        product={selectedProduct}
-        stone={detailContext === 1 ? selectedStone : null}
+        product={selectedProduct ?? detailProductFallback}
+        stone={detailStone}
         onBack={handleDetailBack}
         detailSource={
-          detailContext === 1 || detailContext === 2 ? detailContext : undefined
+          resolvedDetailContext === 1 || resolvedDetailContext === 2
+            ? resolvedDetailContext
+            : undefined
         }
         onAddSetting={
-          detailContext === 1 ? handleStoneAddPendant : handleGoToStepThree
+          resolvedDetailContext === 1 ? handleStoneAddPendant : handleGoToStepThree
         }
-        centerStoneShape={selectedStone?.shape ?? null}
+        centerStoneShape={detailStone?.shape ?? null}
+        isLoading={stoneLoading}
       />
     );
-  } else if (activeStep === 1) {
+  } else if (stepForRender === 1) {
     content = (
       <div className="py-4">
         <StoneSelectionSection
@@ -777,22 +816,17 @@ export default function StepExperience() {
         />
       </div>
     );
-  } else if (activeStep === 2) {
+  } else if (stepForRender === 2) {
     content = (
       <div>
         <StepOneLanding
           products={products}
-          total={productTotal}
-          currentPage={productPage}
-          pageSize={PRODUCTS_PAGE_SIZE}
-          loading={productLoading}
-          onPageChange={setProductPage}
           onMoreInfo={handlePendantMoreInfo}
           onCompleteRing={handleCompleteRing}
         />
       </div>
     );
-  } else if (activeStep === 3) {
+  } else if (stepForRender === 3) {
     // 如果从 URL 恢复了 settingChoice但当前状态中没有，则应用它
     const effectiveSettingChoice = settingChoice ?? settingChoiceFromUrl;
 
@@ -832,11 +866,12 @@ export default function StepExperience() {
       />
       <div className="max-w-8xl mx-auto px-4 py-8">
         <CustomizationSteps
-          activeStep={activeStep}
+          activeStep={stepForRender}
           onStepChange={changeStep}
           selectedStone={selectedStone}
           selectedProduct={selectedProduct}
           settingChoice={settingChoice}
+          hasSelectedProduct={hasSelectedProduct}
         />
       </div>
 

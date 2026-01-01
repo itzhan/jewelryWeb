@@ -68,7 +68,7 @@ export interface BackendProductSummary {
   shopifyVariantId?: string;
 }
 
-export interface ProductsListResponse {
+interface ProductsListResponse {
   data: BackendProductSummary[];
   meta: {
     pagination: {
@@ -79,26 +79,13 @@ export interface ProductsListResponse {
   };
 }
 
-export interface ProductsListQuery {
-  categoryCode?: string;
-  page?: number;
-  pageSize?: number;
-}
-
-export async function fetchProductsList(
-  params: ProductsListQuery
-): Promise<ProductsListResponse> {
-  return apiGet<ProductsListResponse>("/products", params);
-}
-
-export async function fetchPendantProducts(
-  params: Omit<ProductsListQuery, "categoryCode"> = {}
-): Promise<ProductsListResponse> {
-  return fetchProductsList({
+export async function fetchPendantProducts(): Promise<BackendProductSummary[]> {
+  const result = await apiGet<ProductsListResponse>("/products", {
     categoryCode: "pendant",
-    page: params.page ?? 1,
-    pageSize: params.pageSize ?? 24,
+    page: 1,
+    pageSize: 24,
   });
+  return result.data ?? [];
 }
 
 export interface ProductImageDto {

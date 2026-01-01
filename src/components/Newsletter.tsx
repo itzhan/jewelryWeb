@@ -1,15 +1,15 @@
 export default function Newsletter() {
   return (
-    <div className="bg-gray-800 text-white py-16">
+    <div className="bg-gray-800 text-white py-12 sm:py-16">
       <div className="max-w-2xl mx-auto px-4 text-center">
-        <h2 className="text-3xl font-serif mb-6">SUBSCRIBE TO OUR NEWSLETTER</h2>
-        <div className="flex gap-2">
+        <h2 className="text-2xl sm:text-3xl font-serif mb-6">SUBSCRIBE TO OUR NEWSLETTER</h2>
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="email"
             placeholder="ENTER YOUR EMAIL"
             className="flex-1 px-6 py-4 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-gray-400"
           />
-          <button className="px-8 py-4 bg-white text-black rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+          <button className="w-full sm:w-auto px-8 py-4 bg-white text-black rounded-lg font-semibold hover:bg-gray-100 transition-colors">
             SUBSCRIBE
           </button>
         </div>

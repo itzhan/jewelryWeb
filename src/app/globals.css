@@ -158,12 +158,12 @@
 
 @keyframes viewFadeSlide {
   from {
-    opacity: 0;
-    transform: translateY(14px) scale(0.99);
+    opacity: 1;
+    transform: none;
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 }
 

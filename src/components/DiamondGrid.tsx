@@ -154,7 +154,7 @@ export default function DiamondGrid({
   };
 
   return (
-    <div className="CustomGridContainer mx-auto grid max-w-8xl grid-cols-1 gap-5 px-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="CustomGridContainer mx-auto grid max-w-8xl grid-cols-2 gap-2 px-2 sm:gap-5 sm:px-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {stones.map((diamond) => {
         const installment = (diamond.price / 12).toFixed(2);
         const isFavorite = favorites.includes(diamond.id);
@@ -165,7 +165,7 @@ export default function DiamondGrid({
         return (
           <div
             key={diamond.id}
-            className={`group relative flex cursor-pointer flex-col overflow-visible rounded-[1.75rem] border border-gray-100 bg-white/95 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-[border-radius,_transform,_box-shadow,_border-color] duration-300 hover:-translate-y-2 hover:shadow-[0_25px_60px_rgba(15,23,42,0.18)] hover:z-20 hover:rounded-bl-none hover:rounded-br-none`}
+            className={`group relative flex cursor-pointer flex-col overflow-visible rounded-[1.5rem] border border-gray-100 bg-white/95 p-2 sm:p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-[border-radius,_transform,_box-shadow,_border-color] duration-300 md:hover:-translate-y-2 md:hover:shadow-[0_25px_60px_rgba(15,23,42,0.18)] md:hover:z-20 md:hover:rounded-bl-none md:hover:rounded-br-none`}
             onClick={() =>
               onMoreInfo?.({
                 ...diamond,
@@ -173,7 +173,7 @@ export default function DiamondGrid({
               })
             }
           >
-            <div className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#e8f0fb] via-white to-[#dfe9ff] p-4 group-hover:rounded-bl-none group-hover:rounded-br-none">
+            <div className="relative overflow-hidden rounded-[1.3rem] sm:rounded-[1.5rem] bg-gradient-to-br from-[#e8f0fb] via-white to-[#dfe9ff] p-3 sm:p-4 group-hover:rounded-bl-none group-hover:rounded-br-none">
               {/* Temporarily commented out - may be re-enabled in the future */}
               {/* <div className="absolute right-4 top-4 z-10">
                 <button
@@ -202,13 +202,13 @@ export default function DiamondGrid({
                 </button>
               </div> */}
 
-              <div className="aspect-[4/3] overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-white via-[#f4f8ff] to-[#d9e6ff]">
+              <div className="aspect-[4/3] overflow-hidden rounded-[1.1rem] sm:rounded-[1.25rem] bg-gradient-to-br from-white via-[#f4f8ff] to-[#d9e6ff]">
                 <div className="flex h-full items-center justify-center">
                   {diamond.primaryImageUrl ? (
                     <img
                       src={diamond.primaryImageUrl}
                       alt={labelShape}
-                      className="h-full max-h-[280px] w-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                      className="h-full max-h-[200px] sm:max-h-[260px] w-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
                     />
                   ) : (
                     <svg
@@ -230,58 +230,94 @@ export default function DiamondGrid({
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col px-4 pb-4 pt-5">
+            <div className="flex flex-1 flex-col px-3 sm:px-4 pb-3 sm:pb-4 pt-4 sm:pt-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-lg font-semibold text-gray-900">
+                  <p className="text-sm sm:text-lg font-semibold text-gray-900">
                     {labelShape}
                   </p>
                 </div>
-                <p className="text-xl font-semibold text-gray-900">
+                <p className="text-base sm:text-xl font-semibold text-gray-900">
                   ${diamond.price.toLocaleString()}
                 </p>
               </div>
 
               <div className="mt-4">
-                <div className="grid grid-cols-4 gap-2 rounded-2xl border border-gray-100 bg-gray-50/60 px-3 py-3 text-center">
+                <div className="grid grid-cols-4 gap-1 rounded-2xl border border-gray-100 bg-gray-50/60 px-2 sm:px-3 py-2 sm:py-3 text-center">
                   <div>
-                    <p className="text-base font-semibold text-gray-900">
+                    <p className="text-[11px] sm:text-base font-semibold text-gray-900">
                       {diamond.carat.toFixed(2)}
                     </p>
-                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                    <p className="text-[9px] sm:text-xs uppercase tracking-wide text-gray-400">
                       Carat
                     </p>
                   </div>
                   <div>
-                    <p className="text-base font-semibold text-gray-900">
+                    <p className="text-[11px] sm:text-base font-semibold text-gray-900">
                       {diamond.color}
                     </p>
-                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                    <p className="text-[9px] sm:text-xs uppercase tracking-wide text-gray-400">
                       Color
                     </p>
                   </div>
                   <div>
-                    <p className="text-base font-semibold text-gray-900">
+                    <p className="text-[11px] sm:text-base font-semibold text-gray-900">
                       {diamond.clarity}
                     </p>
-                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                    <p className="text-[9px] sm:text-xs uppercase tracking-wide text-gray-400">
                       Clarity
                     </p>
                   </div>
                   <div>
-                    <p className="text-base font-semibold text-gray-900">
+                    <p className="text-[11px] sm:text-base font-semibold text-gray-900">
                       {diamond.ratio.toFixed(2)}
                     </p>
-                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                    <p className="text-[9px] sm:text-xs uppercase tracking-wide text-gray-400">
                       Ratio
                     </p>
                   </div>
                 </div>
               </div>
+              <div className="mt-4 flex flex-col gap-2 md:hidden">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onMoreInfo?.({
+                      ...diamond,
+                      shapeIconSvg: diamond.shapeIconSvg ?? iconSvgFromShapes,
+                    });
+                  }}
+                  className="w-full rounded-full border border-gray-900/80 py-1.5 text-[0.55rem] font-semibold text-gray-900"
+                >
+                  More Info
+                </button>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onAddPendant?.({
+                      ...diamond,
+                      shapeIconSvg: diamond.shapeIconSvg ?? iconSvgFromShapes,
+                    });
+                  }}
+                  className="w-full rounded-full bg-gray-900 py-1.5 text-[0.55rem] font-semibold text-white"
+                >
+                  Add pendant
+                </button>
+                <p className="text-[10px] leading-tight text-gray-500">
+                  Pay in 12 interest-free installments of{" "}
+                  <span className="font-semibold text-gray-900">
+                    ${installment}
+                  </span>
+                </p>
+              </div>
             </div>
 
             <div
               className="
+                hidden
+                md:block
                 absolute
                 left-0
                 right-0
@@ -293,14 +329,14 @@ export default function DiamondGrid({
                 border-t-0
                 border-gray-200
                 shadow-[0_22px_50px_rgba(15,23,42,0.18)]
-                opacity-0
-                translate-y-2
-                pointer-events-none
+                md:opacity-0
+                md:translate-y-2
+                md:pointer-events-none
                 transition-all
                 duration-300
-                group-hover:opacity-100
-                group-hover:translate-y-0
-                group-hover:pointer-events-auto
+                md:group-hover:opacity-100
+                md:group-hover:translate-y-0
+                md:group-hover:pointer-events-auto
                 z-20
               "
             >

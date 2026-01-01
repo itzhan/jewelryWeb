@@ -83,16 +83,89 @@ export default function ProductSection({
   const has360Video = isStepOneDetails && stoneDetail?.externalVideoUrl;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1.6fr,1fr] gap-12 mb-12">
-      {/* Product Images */}
-      <div className="relative lg:sticky lg:top-10 self-start space-y-4 pb-16">
+    <div className="grid grid-cols-1 lg:grid-cols-[1.6fr,1fr] gap-8 lg:gap-12 mb-12">
+      {/* Mobile carousel */}
+      <div className="md:hidden space-y-3">
+        <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2">
+          {images.map((image, index) => (
+            <div
+              key={`mobile-image-${image.url}-${index}`}
+              className="snap-start shrink-0 w-[86%]"
+            >
+              <figure className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gray-50 shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
+                <img
+                  src={image.url}
+                  alt={image.alt}
+                  className="h-full w-full object-cover"
+                />
+                {image.badge && (
+                  <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-gray-700 shadow-sm">
+                    {image.badge}
+                  </span>
+                )}
+              </figure>
+            </div>
+          ))}
+          {has360Video && stoneDetail?.externalVideoUrl && (
+            <div className="snap-start shrink-0 w-[86%]">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gray-50 shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
+                <iframe
+                  src={`${stoneDetail.externalVideoUrl}${stoneDetail.externalVideoUrl?.includes("?") ? "&" : "?"}controls=0&ui=minimal`}
+                  className="h-full w-full border-0"
+                  title="360° Stone View"
+                  allow="fullscreen"
+                  loading="lazy"
+                  style={{ pointerEvents: "auto" }}
+                />
+              </div>
+            </div>
+          )}
+          {isStepOneDetails && stoneDetail && (
+            <div className="snap-start shrink-0 w-[86%]">
+              <div className="relative aspect-[4/3] rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 p-5 shadow-[0_12px_30px_rgba(15,23,42,0.12)] flex flex-col items-center justify-center text-center">
+                <img
+                  src="https://cdn.shopify.com/oxygen-v2/24658/9071/18525/2676729/build/_assets/kzr-icon-igi-crt-GAZVFCK3.svg"
+                  width="240"
+                  height="240"
+                  loading="eager"
+                  alt="Diamond certificate"
+                  className="w-24 mb-3"
+                />
+                <p className="text-[#937D67] text-lg leading-tight uppercase font-bold">
+                  {stoneDetail.type === "lab_grown" ? "Lab Diamond" : "Natural Diamond"}
+                </p>
+                {certificateLink ? (
+                  <a
+                    href={certificateLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 text-xs font-semibold uppercase tracking-[0.25em] text-gray-600 underline"
+                  >
+                    View Certificate
+                  </a>
+                ) : (
+                  <span className="text-gray-400 text-xs mt-2">
+                    Certificate unavailable
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        <p className="text-center text-xs text-gray-500">
+          Swipe to explore all angles of the stone.
+        </p>
+      </div>
+
+      {/* Desktop image grid */}
+      <div className="hidden md:block relative lg:sticky lg:top-10 self-start space-y-4 pb-10 lg:pb-16">
         <div className="grid grid-cols-2 gap-4 rounded-[36px]">
           {/* First image */}
           {images[0] && (
             <figure
               className={`relative ${getAspectClass(
                 images[0].aspect
-              )} rounded-[32px] overflow-hidden bg-gray-50 shadow-[0_18px_45px_rgba(15,23,42,0.08)]`}
+              )} rounded-[24px] sm:rounded-[32px] overflow-hidden bg-gray-50 shadow-[0_18px_45px_rgba(15,23,42,0.08)]`}
             >
               <img
                 src={images[0].url}
@@ -109,7 +182,7 @@ export default function ProductSection({
 
           {/* Second position - 360 video if available, else image */}
           {has360Video ? (
-            <div className="relative aspect-square rounded-[32px] overflow-hidden bg-gray-50 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            <div className="relative aspect-square rounded-[24px] sm:rounded-[32px] overflow-hidden bg-gray-50 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
               <iframe
                 src={`${stoneDetail.externalVideoUrl}${stoneDetail.externalVideoUrl?.includes('?') ? '&' : '?'}controls=0&ui=minimal`}
                 className="w-full h-full border-0"
@@ -124,7 +197,7 @@ export default function ProductSection({
               <figure
                 className={`relative ${getAspectClass(
                   images[1].aspect
-                )} rounded-[32px] overflow-hidden bg-gray-50 shadow-[0_18px_45px_rgba(15,23,42,0.08)]`}
+                )} rounded-[24px] sm:rounded-[32px] overflow-hidden bg-gray-50 shadow-[0_18px_45px_rgba(15,23,42,0.08)]`}
               >
                 <img
                   src={images[1].url}
@@ -145,7 +218,7 @@ export default function ProductSection({
             <figure
               className={`relative ${getAspectClass(
                 images[2].aspect
-              )} rounded-[32px] overflow-hidden bg-gray-50 shadow-[0_18px_45px_rgba(15,23,42,0.08)]`}
+              )} rounded-[24px] sm:rounded-[32px] overflow-hidden bg-gray-50 shadow-[0_18px_45px_rgba(15,23,42,0.08)]`}
             >
               <img
                 src={images[2].url}
@@ -162,7 +235,7 @@ export default function ProductSection({
 
           {/* Certificate Card - Fixed 4th position */}
           {isStepOneDetails && stoneDetail ? (
-            <div className="relative aspect-square rounded-[32px] overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 shadow-[0_18px_45px_rgba(15,23,42,0.08)] flex justify-center items-center flex-col text-center p-8">
+            <div className="relative aspect-square rounded-[24px] sm:rounded-[32px] overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 shadow-[0_18px_45px_rgba(15,23,42,0.08)] flex justify-center items-center flex-col text-center p-6 sm:p-8">
               <img
                 src="https://cdn.shopify.com/oxygen-v2/24658/9071/18525/2676729/build/_assets/kzr-icon-igi-crt-GAZVFCK3.svg"
                 width="400"
@@ -171,7 +244,7 @@ export default function ProductSection({
                 alt="Diamond certificate Round shape desktop image "
                 className="DiamondCertificate__Image w-full aspect-square fadeIn object-cover max-w-[8rem] mb-4"
               />
-              <p className="text-[#937D67] text-2xl leading-tight uppercase font-bold">
+              <p className="text-[#937D67] text-xl sm:text-2xl leading-tight uppercase font-bold">
                 {stoneDetail.type === "lab_grown" ? "Lab Diamond" : "Natural Diamond"}
               </p>
               {certificateLink ? (
@@ -179,7 +252,7 @@ export default function ProductSection({
                   href={certificateLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="cursor-pointer text-gray-600 text-base leading-tight font-medium mt-2 underline hover:text-gray-900 transition"
+                  className="cursor-pointer text-gray-600 text-sm sm:text-base leading-tight font-medium mt-2 underline hover:text-gray-900 transition"
                 >
                   View Certificate
                 </a>

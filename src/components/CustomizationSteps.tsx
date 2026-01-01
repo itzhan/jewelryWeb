@@ -15,6 +15,7 @@ interface CustomizationStepsProps {
   selectedStone?: BackendStoneItem | null;
   selectedProduct?: StepOneProduct | null;
   settingChoice?: SettingChoice | null;
+  hasSelectedProduct?: boolean;
 }
 
 interface StepDetail {
@@ -69,10 +70,13 @@ export default function CustomizationSteps({
   selectedStone,
   selectedProduct,
   settingChoice,
+  hasSelectedProduct = false,
 }: CustomizationStepsProps) {
   const steps = useMemo<StepConfig[]>(() => {
+    const hasProductSelection = Boolean(hasSelectedProduct && selectedProduct);
+    const displayProduct = hasProductSelection ? selectedProduct : null;
     const { currency: productCurrency, amount: productAmount } =
-      parseProductPrice(selectedProduct?.price);
+      parseProductPrice(displayProduct?.price);
 
     const stonePrice = selectedStone?.price ?? null;
     const stoneCurrency = selectedStone?.currency ?? null;
@@ -88,11 +92,11 @@ export default function CustomizationSteps({
       stonePrice
     );
 
-    const settingLabel: string = selectedProduct?.name ?? "Select your setting";
+    const settingLabel: string = displayProduct?.name ?? "Select your setting";
 
     const settingPriceLabel =
-      selectedProduct?.price && selectedProduct.price.trim().length > 0
-        ? selectedProduct.price
+      displayProduct?.price && displayProduct.price.trim().length > 0
+        ? displayProduct.price
         : undefined;
 
     const totalAmount = (stonePrice ?? 0) + (productAmount ?? 0);
@@ -128,7 +132,7 @@ export default function CustomizationSteps({
         subtitle: "Select your",
         detail: {
           label: settingLabel,
-          actionLabel: selectedProduct ? "View" : "Select",
+          actionLabel: displayProduct ? "View" : "Select",
           price: settingPriceLabel
         },
       },
@@ -143,7 +147,7 @@ export default function CustomizationSteps({
         },
       },
     ];
-  }, [selectedStone, selectedProduct, settingChoice]);
+  }, [selectedStone, selectedProduct, settingChoice, hasSelectedProduct]);
 
   const interactiveProps = (step: StepNumber) => {
     if (!onStepChange) {
@@ -169,11 +173,11 @@ export default function CustomizationSteps({
     };
   };
 
-  const getWrapperClasses = () => "relative flex-1 min-w-0";
+  const getWrapperClasses = () => "relative w-full md:flex-1 min-w-0";
 
   const getCardClasses = (isActive: boolean, _isCompleted: boolean) =>
     cn(
-      "group relative h-full flex items-center gap-6 px-5 py-4 border overflow-hidden transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20 bg-white/90 backdrop-blur-sm rounded-2xl shadow-[0_10px_22px_rgba(17,24,39,0.08)]",
+      "group relative h-full flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6 px-4 sm:px-5 py-4 border overflow-hidden transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20 bg-white/90 backdrop-blur-sm rounded-2xl shadow-[0_10px_22px_rgba(17,24,39,0.08)]",
       isActive
         ? "border-black/80 shadow-[0_16px_34px_rgba(17,24,39,0.14)]"
         : "border-[#e5e5e5] hover:-translate-y-1 hover:shadow-[0_16px_30px_rgba(17,24,39,0.12)]",
@@ -251,77 +255,115 @@ export default function CustomizationSteps({
   );
 
   return (
-    <div className="steps-configuration-container w-full border border-[#e7e7e7] rounded-[28px] bg-gradient-to-r from-[#f7f7f7] via-white to-[#f7f7f7] px-3 py-4 shadow-[0_18px_36px_rgba(17,24,39,0.08)]">
-      <div className="w-full">
-        <div className="flex gap-4 w-full">
+    <div className="w-full">
+      {/* Mobile: compact segmented step bar */}
+      <div className="md:hidden w-full rounded-2xl border border-[#e7e7e7] bg-white px-2 py-2 shadow-[0_12px_24px_rgba(17,24,39,0.08)]">
+        <div className="flex gap-2">
           {steps.map((step) => {
             const isActive = activeStep === step.value;
-            const isCompleted = step.value < activeStep;
-
             return (
-              <div key={step.value} className={getWrapperClasses()}>
-                <div
-                  className={getCardClasses(isActive, isCompleted)}
-                  {...interactiveProps(step.value)}
+              <button
+                key={step.value}
+                type="button"
+                className={cn(
+                  "flex-1 rounded-xl px-2 py-2 transition-colors flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] border",
+                  isActive
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-gray-600 border-gray-200"
+                )}
+                onClick={() => onStepChange?.(step.value, "card")}
+                aria-current={isActive ? "step" : undefined}
+              >
+                <span
+                  className={cn(
+                    "flex h-5 w-5 items-center justify-center rounded-full text-[10px] border",
+                    isActive
+                      ? "bg-white text-black border-white"
+                      : "bg-gray-50 text-gray-600 border-gray-200"
+                  )}
                 >
-                  <div className="flex items-center gap-4 min-w-[170px] shrink-0">
-                    <span
-                      className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors duration-300 border",
-                        isActive
-                          ? "bg-black text-white border-black"
-                          : "bg-[#f0f0f0] text-gray-800 border-[#dcdcdc]"
-                      )}
-                    >
-                      {step.value}
-                    </span>
-                    <div className="leading-tight">
-                      <div className="text-[12px] font-semibold text-gray-500 tracking-[0.18em] uppercase">
-                        {step.subtitle}
-                      </div>
-                      <div className="text-lg md:text-xl font-semibold text-gray-900 uppercase">
-                        {step.title}
+                  {step.value}
+                </span>
+                <span>{step.title}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Desktop: original card layout */}
+      <div className="hidden md:block steps-configuration-container w-full border border-[#e7e7e7] rounded-[28px] bg-gradient-to-r from-[#f7f7f7] via-white to-[#f7f7f7] px-3 py-4 shadow-[0_18px_36px_rgba(17,24,39,0.08)]">
+        <div className="w-full">
+          <div className="flex flex-col gap-3 w-full md:flex-row md:gap-4">
+            {steps.map((step) => {
+              const isActive = activeStep === step.value;
+              const isCompleted = step.value < activeStep;
+
+              return (
+                <div key={step.value} className={getWrapperClasses()}>
+                  <div
+                    className={getCardClasses(isActive, isCompleted)}
+                    {...interactiveProps(step.value)}
+                  >
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-[140px] sm:min-w-[170px] shrink-0 w-full md:w-auto">
+                      <span
+                        className={cn(
+                          "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors duration-300 border",
+                          isActive
+                            ? "bg-black text-white border-black"
+                            : "bg-[#f0f0f0] text-gray-800 border-[#dcdcdc]"
+                        )}
+                      >
+                        {step.value}
+                      </span>
+                      <div className="leading-tight">
+                        <div className="text-[12px] font-semibold text-gray-500 tracking-[0.18em] uppercase">
+                          {step.subtitle}
+                        </div>
+                        <div className="text-lg md:text-xl font-semibold text-gray-900 uppercase">
+                          {step.title}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <StepDetail
-                    detail={step.detail}
-                    step={step.value}
-                    isActive={isActive}
-                  />
+                    <StepDetail
+                      detail={step.detail}
+                      step={step.value}
+                      isActive={isActive}
+                    />
 
-                  <div className="flex items-center gap-3">
-                    {step.detail.icon && (
-                      <div className="hidden md:block text-gray-700">
-                        {step.detail.icon}
-                      </div>
-                    )}
-                    <div
-                      className={cn(
-                        "w-9 h-9 rounded-full border flex items-center justify-center bg-white transition-all duration-300 shadow-sm",
-                        isCompleted
-                          ? "border-[#11845b] bg-[#11845b] text-white"
-                          : isActive
-                          ? "border-black bg-black text-white"
-                          : "border-[#dcdcdc] text-transparent"
+                    <div className="flex items-center gap-3 self-end md:self-auto">
+                      {step.detail.icon && (
+                        <div className="hidden md:block text-gray-700">
+                          {step.detail.icon}
+                        </div>
                       )}
-                    >
-                      <Check
-                        strokeWidth={2}
+                      <div
                         className={cn(
-                          "w-4 h-4 transition-all",
-                          isCompleted || isActive
-                            ? "opacity-100 scale-100"
-                            : "opacity-0 scale-90"
+                          "w-9 h-9 rounded-full border flex items-center justify-center bg-white transition-all duration-300 shadow-sm",
+                          isCompleted
+                            ? "border-[#11845b] bg-[#11845b] text-white"
+                            : isActive
+                            ? "border-black bg-black text-white"
+                            : "border-[#dcdcdc] text-transparent"
                         )}
-                      />
+                      >
+                        <Check
+                          strokeWidth={2}
+                          className={cn(
+                            "w-4 h-4 transition-all",
+                            isCompleted || isActive
+                              ? "opacity-100 scale-100"
+                              : "opacity-0 scale-90"
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

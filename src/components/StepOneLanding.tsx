@@ -14,11 +14,6 @@ export interface StepOneProduct {
 
 interface StepOneLandingProps {
   products: StepOneProduct[];
-  total?: number;
-  currentPage: number;
-  pageSize: number;
-  loading?: boolean;
-  onPageChange: (page: number) => void;
   onMoreInfo: (product: StepOneProduct) => void;
   onCompleteRing: (product: StepOneProduct) => void;
 }
@@ -70,11 +65,6 @@ const buildPaletteGradient = (colors: string[]) => {
 
 export default function StepOneLanding({
   products,
-  total,
-  currentPage,
-  pageSize,
-  loading = false,
-  onPageChange,
   onMoreInfo,
   onCompleteRing,
 }: StepOneLandingProps) {
@@ -200,16 +190,16 @@ export default function StepOneLanding({
 
   return (
     <div className="bg-white">
-      <div className="page-width pt-12 text-center">
-        <h2 className="text-4xl font-light mb-4">Pendants</h2>
-        <p className="text-gray-600">
+      <div className="page-width pt-10 sm:pt-12 text-center">
+        <h2 className="text-2xl sm:text-4xl font-light mb-3 sm:mb-4">Pendants</h2>
+        <p className="text-sm sm:text-base text-gray-600">
           Discover our collection of made to order pendants and customize it to
           your preference
         </p>
       </div>
 
-      <div className="page-width pb-16 pt-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="page-width pb-12 sm:pb-16 pt-6 sm:pt-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6 -mx-2 sm:mx-0">
           {sortedProducts.map((product) => {
             const installment = (priceToNumber(product.price) / 4).toFixed(2);
             const activeColor = selectedColors[product.id] ?? product.colors[0];
@@ -221,7 +211,7 @@ export default function StepOneLanding({
                 onClick={() => onMoreInfo(product)}
               >
                 {/* 主卡片本体 */}
-                <div className="relative rounded-2xl border border-gray-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.1)] transition-[border-radius,_transform,_box-shadow] duration-300 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_20px_45px_rgba(15,23,42,0.16)] group-hover:scale-[1.015] transform z-10 group-hover:rounded-bl-none group-hover:rounded-br-none">
+                <div className="relative rounded-2xl border border-gray-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.1)] transition-[border-radius,_transform,_box-shadow] duration-300 ease-out md:group-hover:-translate-y-1 md:group-hover:shadow-[0_20px_45px_rgba(15,23,42,0.16)] md:group-hover:scale-[1.015] transform z-10 md:group-hover:rounded-bl-none md:group-hover:rounded-br-none">
                   <div className="relative">
                     <img
                       src={
@@ -231,7 +221,7 @@ export default function StepOneLanding({
                       }
                       alt={product.name}
                       loading="lazy"
-                      className="w-full h-[420px] min-h-[340px] object-contain rounded-t-2xl transition duration-500"
+                      className="w-full h-[200px] sm:h-[320px] lg:h-[420px] min-h-[180px] sm:min-h-[280px] object-contain rounded-t-2xl transition duration-500"
                     />
                     <img
                       src={product.image}
@@ -246,10 +236,10 @@ export default function StepOneLanding({
                     >
                       <Heart className="h-5 w-5 text-gray-600" />
                     </button> */}
-                    <div className="absolute left-4 top-4 rounded-full border border-black bg-white px-3 py-1 text-[0.65rem] uppercase tracking-[0.4em] text-black opacity-0 transition-all duration-300 -translate-x-6 group-hover:translate-x-0 group-hover:opacity-100">
+                    <div className="absolute left-4 top-4 rounded-full border border-black bg-white px-3 py-1 text-[0.65rem] uppercase tracking-[0.4em] text-black opacity-0 transition-all duration-300 -translate-x-6 md:group-hover:translate-x-0 md:group-hover:opacity-100">
                       Customizable
                     </div>
-                    <div className="absolute left-1/2 bottom-4 -translate-x-1/2 flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.35em] text-gray-500 opacity-0 transition-all duration-300 translate-y-3 group-hover:translate-y-0 group-hover:opacity-100">
+                    <div className="absolute left-1/2 bottom-4 -translate-x-1/2 flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.35em] text-gray-500 opacity-0 transition-all duration-300 translate-y-3 md:group-hover:translate-y-0 md:group-hover:opacity-100">
                       <button
                         type="button"
                         className="text-base hover:text-black"
@@ -279,20 +269,20 @@ export default function StepOneLanding({
                     </div>
                   </div>
 
-                  <div className="px-6 pt-4 pb-5">
-                    <div className="flex items-center justify-between text-[0.65rem] uppercase tracking-[0.35em] text-gray-500 mb-3">
+                  <div className="px-4 sm:px-6 pt-3 sm:pt-4 pb-4 sm:pb-5">
+                    <div className="flex items-center justify-between text-[0.6rem] sm:text-[0.65rem] uppercase tracking-[0.3em] text-gray-500 mb-2 sm:mb-3">
                       <span>Customizable</span>
                       <span>☆</span>
                     </div>
                     <div className="flex items-start justify-between gap-4 mt-3">
                       <div>
-                        <h3 className="font-semibold text-lg">{product.name}</h3>
-                        <p className="text-gray-900 mt-1">{product.price}</p>
+                        <h3 className="font-semibold text-sm sm:text-lg">{product.name}</h3>
+                        <p className="text-gray-900 mt-1 text-xs sm:text-base">{product.price}</p>
                       </div>
                       <div className="flex gap-2 items-center">
                         {product.colors.map((color, idx) => {
                           const isActive = color === activeColor;
-                          const buttonClasses = `relative w-7 h-7 rounded-full border transition focus-visible:outline-none ${
+                          const buttonClasses = `relative w-6 h-6 sm:w-7 sm:h-7 rounded-full border transition focus-visible:outline-none ${
                             isActive
                               ? "border-gray-400 ring-2 ring-gray-300/70 ring-offset-1 ring-offset-white shadow-[0_0_0_1px_rgba(0,0,0,0.08)]"
                               : "border-gray-300"
@@ -315,12 +305,43 @@ export default function StepOneLanding({
                         })}
                       </div>
                     </div>
+                    <div className="mt-4 flex flex-col gap-2 md:hidden">
+                      <button
+                        className="w-full rounded-full border border-black bg-black py-1.5 text-[0.55rem] font-semibold uppercase tracking-[0.2em] text-white"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onCompleteRing(product);
+                        }}
+                      >
+                        Complete your ring
+                      </button>
+                      <button
+                        className="w-full rounded-full border border-black bg-white py-1.5 text-[0.55rem] font-semibold uppercase tracking-[0.2em] text-black"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onMoreInfo(product);
+                        }}
+                      >
+                        More Info
+                      </button>
+                      <p className="text-[10px] text-gray-600 leading-tight">
+                        Pay in 4 interest-free installments of{" "}
+                        <span className="font-semibold text-gray-900">
+                          ${installment}
+                        </span>{" "}
+                        <span className="underline cursor-pointer">
+                          Learn more
+                        </span>
+                      </p>
+                    </div>
                   </div>
                 </div>
 
                 {/* 悬浮展开区域：轻微上移覆盖 2px，和主卡片无缝衔接，并叠在下方卡片上方 */}
                 <div
                   className="
+                    hidden
+                    md:block
                     absolute
                     -left-[0.5px]
                     -right-[0.5px]
@@ -332,14 +353,14 @@ export default function StepOneLanding({
                     border-t-0
                     border-gray-200
                     shadow-[0_22px_50px_rgba(15,23,42,0.18)]
-                    opacity-0
-                    translate-y-2
-                    pointer-events-none
+                    md:opacity-0
+                    md:translate-y-2
+                    md:pointer-events-none
                     transition-all
                     duration-300
-                    group-hover:opacity-100
-                    group-hover:translate-y-0
-                    group-hover:pointer-events-auto
+                    md:group-hover:opacity-100
+                    md:group-hover:translate-y-0
+                    md:group-hover:pointer-events-auto
                     z-20
                   "
                 >
@@ -382,65 +403,8 @@ export default function StepOneLanding({
           })}
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <span>
-              {(() => {
-                const count = sortedProducts.length;
-                const start = count ? (currentPage - 1) * pageSize + 1 : 0;
-                const end = count ? (currentPage - 1) * pageSize + count : 0;
-                const totalLabel =
-                  typeof total === "number" ? total : count ? `${end}+` : 0;
-                return `Showing ${start}-${end} of ${totalLabel}`;
-              })()}
-            </span>
-            {loading && <span className="text-xs text-gray-400">Loading...</span>}
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-              disabled={loading || currentPage === 1}
-              aria-label="Previous page"
-            >
-              <svg
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.8}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M15 6l-6 6 6 6" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="rounded-full border border-gray-200 p-2 transition hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={
-                loading ||
-                (typeof total === "number"
-                  ? currentPage * pageSize >= total
-                  : sortedProducts.length < pageSize)
-              }
-              aria-label="Next page"
-            >
-              <svg
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.8}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </button>
-          </div>
+        <div className="text-center mt-12 text-sm text-gray-600">
+          Showing {sortedProducts.length} Out Of {products.length}
         </div>
       </div>
     </div>

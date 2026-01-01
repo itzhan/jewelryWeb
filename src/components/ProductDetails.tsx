@@ -501,52 +501,104 @@ export default function ProductDetails({
 
   return (
     <div className="flex flex-col">
-      <h1 className="text-4xl mb-2">{stoneTitle}</h1>
+      <h1 className="text-2xl sm:text-4xl mb-2">{stoneTitle}</h1>
       {isStepOneVariant ? (
         <>
-          {stonePrice && (
-            <p className="text-4xl font-bold mb-4">{stonePrice}</p>
-          )}
-          <div className="rounded-[32px] border border-gray-200 overflow-hidden mb-6">
-            {statsRows.map((row, rowIndex) => (
-              <div
-                key={`row-${rowIndex}`}
-                className={cn(
-                  "grid grid-cols-3 text-center bg-white",
-                  rowIndex < statsRows.length - 1 && "border-b border-gray-200"
-                )}
-              >
-                {row.map((stat, statIndex) => (
-                  <div
-                    key={stat.label}
-                    className={cn(
-                      "px-6 py-5",
-                      statIndex !== 0 && "border-l border-gray-200"
-                    )}
-                  >
-                    <p className="text-xl font-normal text-gray-900 tracking-[0.08em] leading-tight font-[Playfair_Display]">
-                      {stat.value}
-                    </p>
-                    <p className="text-[0.6rem] uppercase tracking-[0.65em] text-gray-500 mt-1">
-                      {stat.label}
-                    </p>
-                  </div>
-                ))}
+          {/* Mobile layout */}
+          <div className="md:hidden space-y-4">
+            {stonePrice && (
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-[0.35em] text-gray-400">
+                    Price
+                  </span>
+                  <span className="text-lg font-semibold text-gray-900">
+                    {stonePrice}
+                  </span>
+                </div>
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                  {actualStats.slice(0, 4).map((stat) => (
+                    <div
+                      key={`chip-${stat.label}`}
+                      className="shrink-0 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-600"
+                    >
+                      {stat.label}: {stat.value}
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-          {stoneDetail?.externalSupplement1 && (
-            <div className="mb-6">
-              <h3 className="font-semibold mb-3">Description</h3>
-              <p className="text-gray-700 leading-relaxed">
-                {stoneDetail.externalSupplement1}
-              </p>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              {actualStats.map((stat) => (
+                <div
+                  key={`mobile-stat-${stat.label}`}
+                  className="rounded-2xl border border-gray-200 bg-white px-3 py-3 shadow-sm"
+                >
+                  <p className="text-[10px] uppercase tracking-[0.35em] text-gray-400">
+                    {stat.label}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-gray-900">
+                    {stat.value}
+                  </p>
+                </div>
+              ))}
             </div>
-          )}
+            {stoneDetail?.externalSupplement1 && (
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-semibold mb-2">Description</h3>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {stoneDetail.externalSupplement1}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop layout */}
+          <div className="hidden md:block">
+            {stonePrice && (
+              <p className="text-2xl sm:text-4xl font-bold mb-4">{stonePrice}</p>
+            )}
+            <div className="rounded-[32px] border border-gray-200 overflow-hidden mb-6">
+              {statsRows.map((row, rowIndex) => (
+                <div
+                  key={`row-${rowIndex}`}
+                  className={cn(
+                    "grid grid-cols-3 text-center bg-white",
+                    rowIndex < statsRows.length - 1 && "border-b border-gray-200"
+                  )}
+                >
+                  {row.map((stat, statIndex) => (
+                    <div
+                      key={stat.label}
+                      className={cn(
+                        "px-4 sm:px-6 py-4 sm:py-5",
+                        statIndex !== 0 && "border-l border-gray-200"
+                      )}
+                    >
+                      <p className="text-lg sm:text-xl font-normal text-gray-900 tracking-[0.08em] leading-tight font-[Playfair_Display]">
+                        {stat.value}
+                      </p>
+                      <p className="text-[0.6rem] uppercase tracking-[0.65em] text-gray-500 mt-1">
+                        {stat.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+            {stoneDetail?.externalSupplement1 && (
+              <div className="mb-6">
+                <h3 className="font-semibold mb-3">Description</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  {stoneDetail.externalSupplement1}
+                </p>
+              </div>
+            )}
+          </div>
         </>
       ) : (
         <>
-          <p className="text-4xl font-bold mb-4">$670</p>
+          <p className="text-2xl sm:text-4xl font-bold mb-4">$670</p>
 
           <p className="text-gray-700 mb-6 leading-relaxed">
             Stylish and modern, The Amelia has a bezel setting that showcases
@@ -567,7 +619,7 @@ export default function ProductDetails({
             </h3>
             <div className="flex gap-2 flex-wrap">
               <div
-                className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg ${
+                className={`flex flex-col items-center justify-center w-16 h-16 sm:w-20 sm:h-20 border-2 rounded-lg ${
                   shapeLabel === "—"
                     ? "border-gray-300"
                     : "border-black bg-gray-50"
@@ -575,11 +627,11 @@ export default function ProductDetails({
               >
                 {selectedShapeIconSvg ? (
                   <div
-                    className="mb-1 w-8 h-8"
+                    className="mb-1 w-7 h-7 sm:w-8 sm:h-8"
                     dangerouslySetInnerHTML={{ __html: selectedShapeIconSvg }}
                   />
                 ) : (
-                  <div className="mb-1 w-8 h-8 flex items-center justify-center text-gray-400">
+                  <div className="mb-1 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-gray-400">
                     ◆
                   </div>
                 )}
@@ -602,7 +654,7 @@ export default function ProductDetails({
                     e.stopPropagation();
                     setSelectedMetalId(material.id);
                   }}
-                  className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
+                  className={`flex flex-col items-center justify-center w-16 h-16 sm:w-20 sm:h-20 border-2 rounded-lg transition-colors ${
                     selectedMetalId === material.id
                       ? "border-black bg-gray-50"
                       : "border-gray-300 hover:border-gray-400"
@@ -610,11 +662,11 @@ export default function ProductDetails({
                 >
                   {material.svgIcon ? (
                     <div
-                      className="mb-1 w-10 h-10"
+                      className="mb-1 w-8 h-8 sm:w-10 sm:h-10"
                       dangerouslySetInnerHTML={{ __html: material.svgIcon }}
                     />
                   ) : (
-                    <div className="mb-1 w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300"></div>
+                    <div className="mb-1 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300"></div>
                   )}
                   <span className="text-xs text-center leading-tight">
                     {material.name}
@@ -623,7 +675,7 @@ export default function ProductDetails({
               ))}
               {materials.length > 4 && (
                 <button
-                  className="flex items-center justify-center w-20 h-20 border-2 border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
+                  className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 border-2 border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
                   onClick={() => setShowMoreMetals((prev) => !prev)}
                 >
                   <span className="text-2xl text-gray-400">
@@ -642,7 +694,7 @@ export default function ProductDetails({
                       e.stopPropagation();
                       setSelectedMetalId(material.id);
                     }}
-                    className={`flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg transition-colors ${
+                    className={`flex flex-col items-center justify-center w-16 h-16 sm:w-20 sm:h-20 border-2 rounded-lg transition-colors ${
                       selectedMetalId === material.id
                         ? "border-black bg-gray-50"
                         : "border-gray-300 hover:border-gray-400"
@@ -650,11 +702,11 @@ export default function ProductDetails({
                   >
                     {material.svgIcon ? (
                       <div
-                        className="mb-1 w-10 h-10"
+                        className="mb-1 w-8 h-8 sm:w-10 sm:h-10"
                         dangerouslySetInnerHTML={{ __html: material.svgIcon }}
                       />
                     ) : (
-                      <div className="mb-1 w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300"></div>
+                      <div className="mb-1 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300"></div>
                     )}
                     <span className="text-xs text-center leading-tight">
                       {material.name}
@@ -673,7 +725,7 @@ export default function ProductDetails({
           <div className="border-t pt-4 mb-6">
             <div className="flex justify-between items-center mb-2">
               <span className="text-lg font-semibold">Total Price</span>
-              <span className="text-3xl font-bold">$670</span>
+              <span className="text-2xl sm:text-3xl font-bold">$670</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <svg
@@ -732,7 +784,7 @@ export default function ProductDetails({
       </button>
 
       {/* Features */}
-      <div className="grid grid-cols-4 gap-4 mb-8 text-center">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 text-center">
         <div>
           <Plane className="w-8 h-8 mx-auto mb-2" />
           <div className="text-xs font-semibold">Overnight</div>
@@ -773,7 +825,7 @@ export default function ProductDetails({
               <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
                 <span className="text-amber-500">carat</span>
               </div>
-              <p className="text-3xl font-semibold text-gray-900">{stoneDetail?.carat.toFixed(2)}</p>
+              <p className="text-2xl sm:text-3xl font-semibold text-gray-900">{stoneDetail?.carat.toFixed(2)}</p>
               <p className="text-xs text-gray-500">
                 Universal measurement unit for diamonds
               </p>
@@ -826,7 +878,7 @@ export default function ProductDetails({
               <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
                 <span className="text-emerald-500">cut</span>
               </div>
-              <p className="text-2xl font-semibold text-gray-900">{stoneDetail?.cut}</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">{stoneDetail?.cut}</p>
               <p className="text-xs text-gray-500">
                 {stoneDetail?.cut?.toLowerCase() === 'excellent' || stoneDetail?.cut?.toLowerCase() === 'ideal' ? 'Incredible fire and brilliance' :
                  stoneDetail?.cut?.toLowerCase() === 'very good' ? 'Exceptional brilliance' :
@@ -840,7 +892,7 @@ export default function ProductDetails({
               <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
                 <span className="text-cyan-500">dimensions (mm)</span>
               </div>
-              <p className="text-3xl font-semibold text-gray-900">
+              <p className="text-2xl sm:text-3xl font-semibold text-gray-900">
                 {stoneDetail?.externalM1 && stoneDetail?.externalM2
                   ? `${stoneDetail.externalM1.toFixed(2)}x${stoneDetail.externalM2.toFixed(2)}`
                   : 'N/A'}
@@ -866,7 +918,7 @@ export default function ProductDetails({
               <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-gray-400">
                 <span className="text-yellow-500">certification</span>
               </div>
-              <p className="text-2xl font-semibold text-gray-900">{stoneDetail?.externalCertType || stoneDetail?.certificate || 'N/A'}</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">{stoneDetail?.externalCertType || stoneDetail?.certificate || 'N/A'}</p>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-xs text-gray-700">
                   <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-yellow-400 bg-yellow-50 text-[10px] font-semibold text-yellow-700">

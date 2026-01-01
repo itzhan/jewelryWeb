@@ -6,8 +6,8 @@ export default function Footer() {
       <div className="page-width">
         {/* Top section with brand info */}
         <div className="text-center mb-12 max-w-2xl mx-auto">
-          <h2 className="text-3xl font-serif mb-4">KEYZAR</h2>
-          <p className="text-gray-400 mb-6">
+          <h2 className="text-2xl sm:text-3xl font-serif mb-4">KEYZAR</h2>
+          <p className="text-gray-400 mb-6 text-sm sm:text-base">
             We're a team of creatives, programmers, and jewelry experts dedicated to redefining
             the online jewelry shopping experience. We believe that every piece of jewelry holds
             a story, marking a cherished moment worth celebrating.
@@ -29,7 +29,7 @@ export default function Footer() {
         </div>
 
         {/* Social icons */}
-        <div className="flex justify-center gap-6 mb-12">
+        <div className="flex justify-center gap-4 sm:gap-6 mb-12">
           <a href="#" className="hover:opacity-70 transition-opacity">
             <Instagram className="w-6 h-6" />
           </a>
@@ -44,7 +44,7 @@ export default function Footer() {
         </div>
 
         {/* Footer links */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-12">
           <div>
             <h3 className="font-semibold mb-4">ABOUT</h3>
             <ul className="space-y-2 text-sm text-gray-400">
@@ -95,7 +95,7 @@ export default function Footer() {
               © All Rights Reserved to Keyzar Jewelry
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
               <img src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Visa_2021.svg" alt="Visa" className="h-6" />
               <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6" />
               <span className="text-sm">Klarna</span>

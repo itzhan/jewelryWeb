@@ -11,10 +11,13 @@ export default function MainNav() {
   return (
     <nav className="border-b overflow-x-auto">
       <div className="page-width">
-        <ul className="flex items-center justify-center gap-4 md:gap-8 py-4 whitespace-nowrap">
+        <ul className="flex items-center justify-start md:justify-center gap-4 md:gap-8 py-3 md:py-4 whitespace-nowrap">
           {navItems.map((item) => (
             <li key={item}>
-              <a href="#" className="text-xs md:text-sm hover:opacity-70 transition-opacity">
+              <a
+                href="#"
+                className="text-[0.7rem] sm:text-xs md:text-sm hover:opacity-70 transition-opacity"
+              >
                 {item}
               </a>
             </li>
