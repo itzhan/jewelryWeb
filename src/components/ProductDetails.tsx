@@ -7,7 +7,7 @@ import type {
   MaterialDto,
   StoneFilterOption,
 } from "@/lib/backend";
-import { fetchMaterials, fetchStoneFilters } from "@/lib/backend";
+import { fetchMaterials, fetchStoneFilters, type BackendStoneType } from "@/lib/backend";
 import { buildCertificateLink } from "@/lib/certificate";
 import {
   Heart,
@@ -227,6 +227,7 @@ interface ProductDetailsProps {
   showBuySettingButton?: boolean;
   stoneDetail?: StoneDetailDto | null;
   centerStoneShape?: string | null;
+  centerStoneType?: BackendStoneType | null;
   lockCenterStoneShape?: boolean;
 }
 
@@ -237,6 +238,7 @@ export default function ProductDetails({
   showBuySettingButton = true,
   stoneDetail,
   centerStoneShape,
+  centerStoneType,
   lockCenterStoneShape = false,
 }: ProductDetailsProps) {
   const [selectedShape, setSelectedShape] = useState(
@@ -316,10 +318,13 @@ export default function ProductDetails({
   const statsRows = [actualStats.slice(0, 3), actualStats.slice(3)];
   const primaryLabel = primaryActionLabel ?? "Add Center Stone";
   const shapeLabel = lockCenterStoneShape
-    ? centerStoneShape?.trim() || "—"
+    ? centerStoneShape?.trim() || stoneDetail?.shape?.trim() || "—"
     : centerStoneShape?.trim() || selectedShape;
   const selectedShapeIconSvg = useMemo(() => {
     if (!shapeLabel || shapeLabel === "—") return null;
+    if (lockCenterStoneShape && stoneDetail?.shapeIconSvg) {
+      return stoneDetail.shapeIconSvg;
+    }
     const normalized = shapeLabel.toLowerCase();
     const match = shapes.find(
       (shape) =>
@@ -327,7 +332,7 @@ export default function ProductDetails({
         shape.code?.toLowerCase() === normalized
     );
     return match?.iconSvg ?? null;
-  }, [shapeLabel, shapes]);
+  }, [shapeLabel, shapes, lockCenterStoneShape, stoneDetail?.shapeIconSvg]);
 
   const baseAccordionContent = buildAccordionContent(
     shapeLabel,
@@ -490,7 +495,7 @@ export default function ProductDetails({
   };
 
   const stoneTitle = stoneDetail
-    ? `${stoneDetail.carat.toFixed(2)}ct ${stoneDetail.shape} ${
+    ? `${stoneDetail.carat.toFixed(2)}ct ${shapeLabel} ${
         stoneDetail.type === "lab_grown" ? "Lab-Grown" : "Natural"
       } Stone`
     : "The Amelia";
@@ -611,6 +616,24 @@ export default function ProductDetails({
 
       {!isStepOneVariant && (
         <>
+          {/* Center Stone Type */}
+          <div className="mb-6">
+            <h3 className="font-semibold mb-3">
+              Center Stone Type:{" "}
+              <span className="font-normal">
+                {stoneDetail
+                  ? stoneDetail.type === "lab_grown"
+                    ? "Lab Diamond"
+                    : "Natural Diamond"
+                  : centerStoneType
+                    ? centerStoneType === "lab_grown"
+                      ? "Lab Diamond"
+                      : "Natural Diamond"
+                    : "—"}
+              </span>
+            </h3>
+          </div>
+
           {/* Center Stone Shape */}
           <div className="mb-6">
             <h3 className="font-semibold mb-3">

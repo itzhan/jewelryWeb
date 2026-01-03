@@ -122,6 +122,19 @@ export async function fetchProductDetail(
   return result.data;
 }
 
+const productDetailPromiseCache = new Map<number, Promise<ProductDetailDto>>();
+
+export function fetchProductDetailCached(id: number): Promise<ProductDetailDto> {
+  const cached = productDetailPromiseCache.get(id);
+  if (cached) return cached;
+  const promise = fetchProductDetail(id).catch((error) => {
+    productDetailPromiseCache.delete(id);
+    throw error;
+  });
+  productDetailPromiseCache.set(id, promise);
+  return promise;
+}
+
 // ========= Stones =========
 
 export type BackendStoneType = "natural" | "lab_grown";
@@ -256,6 +269,19 @@ export interface StoneDetailDto extends BackendStoneItem {
 export async function fetchStoneDetail(id: number): Promise<StoneDetailDto> {
   const result = await apiGet<{ data: StoneDetailDto }>(`/stones/${id}`);
   return result.data;
+}
+
+const stoneDetailPromiseCache = new Map<number, Promise<StoneDetailDto>>();
+
+export function fetchStoneDetailCached(id: number): Promise<StoneDetailDto> {
+  const cached = stoneDetailPromiseCache.get(id);
+  if (cached) return cached;
+  const promise = fetchStoneDetail(id).catch((error) => {
+    stoneDetailPromiseCache.delete(id);
+    throw error;
+  });
+  stoneDetailPromiseCache.set(id, promise);
+  return promise;
 }
 
 // ========= Draft Order Checkout =========

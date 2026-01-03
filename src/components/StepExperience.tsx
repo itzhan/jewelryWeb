@@ -16,11 +16,12 @@ import StoneMoreInfo from "@/components/StoneMoreInfo";
 import AddSettingModal, { SettingChoice } from "@/components/AddSettingModal";
 import {
   fetchPendantProducts,
-  fetchProductDetail,
-  fetchStoneDetail,
+  fetchProductDetailCached,
+  fetchStoneDetailCached,
   resolveBackendImageUrl,
   type BackendProductSummary,
   type BackendStoneItem,
+  type BackendStoneType,
   type ProductDetailDto,
 } from "@/lib/backend";
 import type { StoneFilters } from "@/types/stone-filters";
@@ -30,6 +31,38 @@ const DEFAULT_STEP_ONE_COLORS: StepOneProduct["colors"] = [
   "yellow",
   "rose",
 ];
+
+const STONE_SHAPE_LABEL_MAP: Record<string, string> = {
+  round: "Round",
+  emerald: "Emerald",
+  heart: "Heart",
+  marquise: "Marquise",
+  oval: "Oval",
+  pear: "Pear",
+  princess: "Princess",
+  radiant: "Radiant",
+  cushion: "Cushion",
+  e_cushion: "E. Cushion",
+};
+
+const formatStoneShapeLabel = (value: string | null | undefined) => {
+  const raw = value?.trim();
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+  return STONE_SHAPE_LABEL_MAP[lower] ?? raw;
+};
+
+const parseStoneType = (
+  value: string | null | undefined,
+): BackendStoneType | null => {
+  const raw = value?.trim().toLowerCase();
+  if (!raw) return null;
+  if (raw === "natural") return "natural";
+  if (raw === "lab_grown" || raw === "lab-grown" || raw === "labgrown") {
+    return "lab_grown";
+  }
+  return null;
+};
 
 const parseUrlIntParam = (value: string | null): number | null => {
   if (!value) {
@@ -83,10 +116,35 @@ const mapProductDetailToStepOneProduct = (
   };
 };
 
+const mapProductDetailImages = (detail: ProductDetailDto): ProductGalleryImage[] => {
+  const sorted = detail.images?.length
+    ? [...detail.images].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    : [];
+  const primary = sorted.find((item) => item.isPrimary) ?? sorted[0];
+  const ordered = primary
+    ? [primary, ...sorted.filter((item) => item !== primary)]
+    : sorted;
+  return ordered
+    .map((item) => ({
+      url: resolveBackendImageUrl(item.url),
+      alt: item.alt || detail.name,
+      badge: item.badge,
+      aspect: item.aspect,
+    }))
+    .filter((item) => item.url.length > 0);
+};
+
 const choiceProductIndex: Record<SettingChoice, number> = {
   necklace: 0,
   ring: 3,
   earring: 6,
+};
+
+type ProductGalleryImage = {
+  url: string;
+  alt: string;
+  badge?: string;
+  aspect?: "square" | "portrait";
 };
 
 type StepNumber = 1 | 2 | 3;
@@ -198,6 +256,11 @@ export default function StepExperience() {
     const stoneFromQuery =
       parseUrlIntParam(searchParams.get("stone")) ??
       parseUrlIntParam(searchParams.get("stoneId"));
+    const stoneShapeFromQuery =
+      searchParams.get("stoneShape") ?? searchParams.get("centerStoneShape");
+    const stoneTypeFromQuery = parseStoneType(
+      searchParams.get("stoneType") ?? searchParams.get("centerStoneType"),
+    );
     const productFromQuery =
       parseUrlIntParam(searchParams.get("product")) ??
       parseUrlIntParam(searchParams.get("productId"));
@@ -207,12 +270,16 @@ export default function StepExperience() {
       step: normalizeStepFromRoute(step),
       detailContext,
       stoneId: stoneId ?? stoneFromQuery,
+      stoneShape: stoneShapeFromQuery,
+      stoneType: stoneTypeFromQuery,
       productId: productId ?? productFromQuery,
       settingChoice: settingChoice ?? settingFromQuery,
     };
   }, [pathname, searchParams]);
 
   const stoneIdFromUrl = routeState.stoneId;
+  const stoneShapeFromUrl = routeState.stoneShape;
+  const stoneTypeFromUrl = routeState.stoneType;
   const productIdFromUrl = routeState.productId;
   const settingChoiceFromUrl = routeState.settingChoice;
 
@@ -228,8 +295,10 @@ export default function StepExperience() {
     null
   );
   const [stoneLoading, setStoneLoading] = useState(false);
+  const [productLoading, setProductLoading] = useState(false);
   const [detailStoneFallback, setDetailStoneFallback] = useState<BackendStoneItem | null>(null);
   const [detailProductFallback, setDetailProductFallback] = useState<StepOneProduct | null>(null);
+  const [detailProductImages, setDetailProductImages] = useState<ProductGalleryImage[] | null>(null);
   const [hasSelectedProduct, setHasSelectedProduct] = useState(false);
   const [settingChoice, setSettingChoice] = useState<SettingChoice | null>(
     null
@@ -366,9 +435,14 @@ export default function StepExperience() {
     }
   }, [routeState.detailContext]);
 
-  // 产品列表只加载一次，不依赖 URL 参数（兼容 Strict Mode 双执行）
+  const shouldLoadProducts =
+    routeState.step >= 2 ||
+    routeState.detailContext === 2 ||
+    detailContext === 2;
+  // 产品列表只加载一次，按需加载（兼容 Strict Mode 双执行）
   const productsRequestRef = useRef({ fetching: false, fetched: false });
   useEffect(() => {
+    if (!shouldLoadProducts) return;
     if (productsRequestRef.current.fetched || productsRequestRef.current.fetching) return;
     productsRequestRef.current.fetching = true;
 
@@ -400,11 +474,13 @@ export default function StepExperience() {
       cancelled = true;
       clearFetching();
     };
-  }, []);
+  }, [shouldLoadProducts]);
 
   // 石头加载：只在需要从 URL 恢复石头数据时加载（如刷新页面）
   // 使用 ref 跟踪已请求的石头 ID，防止重复请求
   const stoneRequestRef = useRef<{ fetching: number | null; fetched: number | null }>({ fetching: null, fetched: null });
+  // 产品详情加载：用于详情页避免重复请求
+  const productDetailRequestRef = useRef<{ fetching: number | null; fetched: number | null }>({ fetching: null, fetched: null });
 
   useEffect(() => {
     // 没有 URL 中的石头 ID，不需要加载
@@ -417,21 +493,26 @@ export default function StepExperience() {
       return;
     }
 
-    stoneRequestRef.current.fetching = stoneIdFromUrl;
+    const requestId = stoneIdFromUrl;
+    stoneRequestRef.current.fetching = requestId;
     let cancelled = false;
-    const clearFetching = () => {
-      if (stoneRequestRef.current.fetching === stoneIdFromUrl) {
+    const finalizeLoading = () => {
+      if (stoneRequestRef.current.fetching === requestId) {
         stoneRequestRef.current.fetching = null;
+        setStoneLoading(false);
       }
     };
 
     (async () => {
       setStoneLoading(true);
       try {
-        const detail = await fetchStoneDetail(stoneIdFromUrl);
+        const detail = await fetchStoneDetailCached(stoneIdFromUrl);
         if (cancelled) return;
+        // 若期间用户点击了其他石头（触发了新的请求），忽略当前过期响应，避免详情被旧请求覆盖
+        if (stoneRequestRef.current.fetching !== requestId) {
+          return;
+        }
         stoneRequestRef.current.fetched = stoneIdFromUrl;
-        clearFetching();
         setSelectedStone(detail);
         setDetailStoneFallback(detail);
         // 如果 URL 包含石头详情页路径，设置详情页上下文
@@ -441,18 +522,14 @@ export default function StepExperience() {
         }
       } catch (error) {
         console.error("无法从 URL 还原石头信息", error);
-        clearFetching();
       } finally {
-        clearFetching();
-        if (!cancelled) {
-          setStoneLoading(false);
-        }
+        finalizeLoading();
       }
     })();
 
     return () => {
       cancelled = true;
-      clearFetching();
+      finalizeLoading();
     };
   }, [stoneIdFromUrl, routeState.detailContext]);
 
@@ -463,6 +540,19 @@ export default function StepExperience() {
     if (selectedProduct?.id === productIdFromUrl) {
       return;
     }
+    if (productDetailRequestRef.current.fetching === productIdFromUrl) {
+      if (routeState.detailContext === 2) {
+        setProductLoading(true);
+      }
+      return;
+    }
+    if (productDetailRequestRef.current.fetched === productIdFromUrl) {
+      if (detailProductFallback?.id === productIdFromUrl) {
+        setSelectedProduct(detailProductFallback);
+        setHasSelectedProduct(true);
+      }
+      return;
+    }
     const persisted = products.find((item) => item.id === productIdFromUrl);
     if (persisted) {
       setSelectedProduct(persisted);
@@ -471,11 +561,20 @@ export default function StepExperience() {
     }
 
     let cancelled = false;
+    const requestId = productIdFromUrl;
+    const shouldShowLoading = routeState.detailContext === 2;
+    productDetailRequestRef.current.fetching = requestId;
+    if (shouldShowLoading) {
+      setProductLoading(true);
+    }
     (async () => {
       try {
-        const detail = await fetchProductDetail(productIdFromUrl);
+        const detail = await fetchProductDetailCached(productIdFromUrl);
         if (cancelled) return;
         const mapped = mapProductDetailToStepOneProduct(detail);
+        setDetailProductFallback(mapped);
+        setDetailProductImages(mapProductDetailImages(detail));
+        productDetailRequestRef.current.fetched = productIdFromUrl;
         setProducts((prev) =>
           prev.some((item) => item.id === mapped.id) ? prev : [...prev, mapped],
         );
@@ -483,18 +582,33 @@ export default function StepExperience() {
         setHasSelectedProduct(true);
       } catch (error) {
         console.error("无法从 URL 还原商品信息", error);
+      } finally {
+        if (productDetailRequestRef.current.fetching === requestId) {
+          productDetailRequestRef.current.fetching = null;
+          if (shouldShowLoading) {
+            setProductLoading(false);
+          }
+        }
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [productIdFromUrl, products, selectedProduct?.id]);
+  }, [
+    productIdFromUrl,
+    products,
+    selectedProduct?.id,
+    detailProductFallback,
+    routeState.detailContext,
+  ]);
 
   const navigateStep = (
     step: StepNumber,
     options: {
       stoneId?: number | null;
+      stoneShape?: string | null;
+      stoneType?: BackendStoneType | null;
       productId?: number | null;
       settingChoice?: SettingChoice | null;
       detail?: StepNumber | null;
@@ -527,7 +641,16 @@ export default function StepExperience() {
       if (canShowDetail) {
         segments.push(productId);
       }
-      navigateTo(segments, {});
+      // 进入步骤二时把已选 stone 写入 URL，避免刷新或进入第三步时丢失 selectedStone
+      navigateTo(segments, {
+        stone: stoneId ?? null,
+        stoneShape:
+          options.stoneShape ??
+          stoneShapeFromUrl ??
+          formatStoneShapeLabel(selectedStone?.shape) ??
+          null,
+        stoneType: options.stoneType ?? stoneTypeFromUrl ?? selectedStone?.type ?? null,
+      });
       return;
     }
 
@@ -540,33 +663,88 @@ export default function StepExperience() {
   };
 
   const handleStoneMoreInfo = (stone: BackendStoneItem) => {
-    // 标记此石头已有数据，防止 useEffect 重复请求
-    stoneRequestRef.current.fetched = stone.id;
+    const resolvedStoneId = Number((stone as unknown as { id?: unknown }).id);
+    if (!Number.isFinite(resolvedStoneId)) {
+      console.error("石头详情缺少有效 id，无法请求详情", stone);
+      return;
+    }
     // 同时设置 selectedStone 和 detailStoneFallback，确保数据立即可用
-    setSelectedStone(stone);
-    setDetailStoneFallback(stone);
+    setSelectedStone({ ...stone, id: resolvedStoneId });
+    setDetailStoneFallback({ ...stone, id: resolvedStoneId });
+    setDetailProductImages(null);
     setForceDetailHidden(false);
     setDetailContext(1);
     setStepOneEntry("detail");
-    navigateStep(1, { stoneId: stone.id, detail: 1 });
     window.scrollTo({ top: 0, behavior: "auto" });
+
+    if (
+      stoneRequestRef.current.fetching === resolvedStoneId ||
+      stoneRequestRef.current.fetched === resolvedStoneId
+    ) {
+      return;
+    }
+
+    const requestId = resolvedStoneId;
+    stoneRequestRef.current.fetching = requestId;
+    setStoneLoading(true);
+    (async () => {
+      try {
+        const detail = await fetchStoneDetailCached(requestId);
+        // 若期间用户又点了别的石头，忽略当前过期响应，避免“点哪个都变成同一个”的错觉
+        if (stoneRequestRef.current.fetching !== requestId) {
+          return;
+        }
+        stoneRequestRef.current.fetched = requestId;
+        setSelectedStone(detail);
+        setDetailStoneFallback(detail);
+      } catch (error) {
+        console.error("加载石头详情失败", error);
+      } finally {
+        if (stoneRequestRef.current.fetching === requestId) {
+          stoneRequestRef.current.fetching = null;
+          setStoneLoading(false);
+        }
+      }
+    })();
   };
 
   const handlePendantMoreInfo = (product: StepOneProduct) => {
     setSelectedProduct(product);
     setDetailProductFallback(product);
+    setDetailProductImages(null);
     setHasSelectedProduct(true);
     setForceDetailHidden(false);
     setIsProductConfirmed(false);
     setShouldShowProductDetailOnReturn(false);
     setDetailContext(2);
-    navigateStep(2, {
-      productId: product.id,
-      stoneId: selectedStone?.id ?? stoneIdFromUrl ?? null,
-      settingChoice: settingChoice ?? settingChoiceFromUrl ?? null,
-      detail: 2,
-    });
     window.scrollTo({ top: 0, behavior: "auto" });
+
+    if (
+      productDetailRequestRef.current.fetching === product.id ||
+      productDetailRequestRef.current.fetched === product.id
+    ) {
+      return;
+    }
+
+    const requestId = product.id;
+    productDetailRequestRef.current.fetching = requestId;
+    setProductLoading(true);
+    (async () => {
+      try {
+        const detail = await fetchProductDetailCached(product.id);
+        productDetailRequestRef.current.fetched = product.id;
+        const mapped = mapProductDetailToStepOneProduct(detail);
+        setDetailProductFallback(mapped);
+        setDetailProductImages(mapProductDetailImages(detail));
+      } catch (error) {
+        console.error("加载商品详情失败", error);
+      } finally {
+        if (productDetailRequestRef.current.fetching === requestId) {
+          productDetailRequestRef.current.fetching = null;
+          setProductLoading(false);
+        }
+      }
+    })();
   };
 
   // 步骤一列表中「Add pendant」触发：记录当前石头并打开类型选择弹窗
@@ -612,11 +790,44 @@ export default function StepExperience() {
     setSelectedProduct(preferredProduct);
     navigateStep(2, {
       stoneId: selectedStone?.id ?? null,
+      stoneShape: formatStoneShapeLabel(selectedStone?.shape),
+      stoneType: selectedStone?.type ?? null,
       settingChoice: choice,
     });
     // 滚动到页面顶部
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  // 若用户以旧链接进入步骤二（只有 stoneId 没有 stoneShape/stoneType），在石头数据恢复后补齐 URL，保证渲染所需信息齐全
+  useEffect(() => {
+    if (routeState.step !== 2) return;
+    if (!stoneIdFromUrl || !settingChoiceFromUrl) return;
+    if (stoneShapeFromUrl && stoneTypeFromUrl) return;
+    if (!selectedStone || selectedStone.id !== stoneIdFromUrl) return;
+
+    const nextShape = stoneShapeFromUrl ?? formatStoneShapeLabel(selectedStone.shape);
+    const nextType = stoneTypeFromUrl ?? selectedStone.type ?? null;
+    if (!nextShape && !nextType) return;
+
+    navigateStep(2, {
+      stoneId: stoneIdFromUrl,
+      stoneShape: nextShape,
+      stoneType: nextType,
+      productId: productIdFromUrl ?? null,
+      settingChoice: settingChoiceFromUrl,
+      detail: routeState.detailContext === 2 ? 2 : null,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    routeState.step,
+    routeState.detailContext,
+    stoneIdFromUrl,
+    stoneShapeFromUrl,
+    stoneTypeFromUrl,
+    settingChoiceFromUrl,
+    productIdFromUrl,
+    selectedStone,
+  ]);
 
   const handleTypeSelectionClose = () => {
     setIsTypeSelectionOpen(false);
@@ -636,7 +847,6 @@ export default function StepExperience() {
   };
 
   const handleDetailBack = () => {
-    const currentDetailContext = detailContext ?? routeState.detailContext ?? null;
     setForceDetailHidden(true);
     setDetailContext((prev) => {
       if (prev === 2) {
@@ -645,17 +855,6 @@ export default function StepExperience() {
       }
       return null;
     });
-    if (currentDetailContext === 1) {
-      navigateStep(1, { stoneId: selectedStone?.id ?? stoneIdFromUrl ?? null });
-      return;
-    }
-    if (currentDetailContext === 2) {
-      navigateStep(2, {
-        stoneId: selectedStone?.id ?? stoneIdFromUrl ?? null,
-        settingChoice: settingChoice ?? settingChoiceFromUrl ?? null,
-        productId: selectedProduct?.id ?? productIdFromUrl ?? null,
-      });
-    }
   };
 
   const handleShapePersist = (shape: string) => {
@@ -703,6 +902,14 @@ export default function StepExperience() {
   const viewKey = `step-${stepForRender}`;
   // 优先使用 detailStoneFallback（点击时同步设置），确保数据立即可用
   const detailStone = detailStoneFallback ?? selectedStone ?? null;
+  const detailLoading =
+    resolvedDetailContext === 1
+      ? stoneLoading
+      : resolvedDetailContext === 2
+      ? productLoading
+      : false;
+  const detailProductImagesForView =
+    resolvedDetailContext === 2 ? detailProductImages ?? undefined : undefined;
 
   // 包装 setActiveStep，同时更新 URL（用于仅切换步骤场景）
   const changeStep = (step: StepNumber, intent?: StepIntent) => {
@@ -791,8 +998,12 @@ export default function StepExperience() {
         onAddSetting={
           resolvedDetailContext === 1 ? handleStoneAddPendant : handleGoToStepThree
         }
-        centerStoneShape={detailStone?.shape ?? null}
-        isLoading={stoneLoading}
+        centerStoneShape={
+          stoneShapeFromUrl ?? formatStoneShapeLabel(detailStone?.shape) ?? null
+        }
+        centerStoneType={stoneTypeFromUrl ?? detailStone?.type ?? null}
+        isLoading={detailLoading}
+        productImages={detailProductImagesForView}
       />
     );
   } else if (stepForRender === 1) {
@@ -832,7 +1043,10 @@ export default function StepExperience() {
 
     // 支持从 URL 或 state 恢复石头信息
     const effectiveStoneId = selectedStone?.id ?? stoneIdFromUrl ?? undefined;
-    const isLoadingStone = !!(stoneIdFromUrl && !selectedStone);
+    // 第三步不应因为 selectedStone 未恢复而永久卡住：
+    // - 恢复石头是异步的，且 ProductContainer 自己也会根据 stoneId 拉取详情
+    // - 仅在“确实正在加载且还没恢复到 state”时显示 loading
+    const isLoadingStone = Boolean(stoneIdFromUrl && !selectedStone && stoneLoading);
     const effectiveProductId = selectedProduct?.id ?? productIdFromUrl ?? 2;
 
     content = (

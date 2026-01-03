@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Heart } from "lucide-react";
-import { fetchProductDetail, resolveBackendImageUrl } from "@/lib/backend";
+import { fetchProductDetailCached, resolveBackendImageUrl } from "@/lib/backend";
 
 export interface StepOneProduct {
   id: number;
@@ -113,7 +113,7 @@ export default function StepOneLanding({
     }
     setLoadingProductId(product.id);
     try {
-      const detail = await fetchProductDetail(product.id);
+      const detail = await fetchProductDetailCached(product.id);
       const sortedImages =
         detail.images && detail.images.length
           ? [...detail.images].sort((a, b) => {
@@ -221,7 +221,7 @@ export default function StepOneLanding({
                       }
                       alt={product.name}
                       loading="lazy"
-                      className="w-full h-[200px] sm:h-[320px] lg:h-[420px] min-h-[180px] sm:min-h-[280px] object-contain rounded-t-2xl transition duration-500"
+                      className="w-full h-[160px] sm:h-[300px] lg:h-[420px] min-h-[140px] sm:min-h-[260px] object-contain rounded-t-2xl transition duration-500"
                     />
                     <img
                       src={product.image}
@@ -269,15 +269,19 @@ export default function StepOneLanding({
                     </div>
                   </div>
 
-                  <div className="px-4 sm:px-6 pt-3 sm:pt-4 pb-4 sm:pb-5">
+                  <div className="px-3 sm:px-6 pt-2.5 sm:pt-4 pb-3.5 sm:pb-5">
                     <div className="flex items-center justify-between text-[0.6rem] sm:text-[0.65rem] uppercase tracking-[0.3em] text-gray-500 mb-2 sm:mb-3">
                       <span>Customizable</span>
                       <span>☆</span>
                     </div>
                     <div className="flex items-start justify-between gap-4 mt-3">
                       <div>
-                        <h3 className="font-semibold text-sm sm:text-lg">{product.name}</h3>
-                        <p className="text-gray-900 mt-1 text-xs sm:text-base">{product.price}</p>
+                        <h3 className="font-semibold text-[13px] sm:text-lg">
+                          {product.name}
+                        </h3>
+                        <p className="text-gray-900 mt-1 text-[11px] sm:text-base">
+                          {product.price}
+                        </p>
                       </div>
                       <div className="flex gap-2 items-center">
                         {product.colors.map((color, idx) => {

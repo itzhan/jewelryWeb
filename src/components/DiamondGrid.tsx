@@ -155,22 +155,38 @@ export default function DiamondGrid({
 
   return (
     <div className="CustomGridContainer mx-auto grid max-w-8xl grid-cols-2 gap-2 px-2 sm:gap-5 sm:px-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {stones.map((diamond) => {
+      {stones.map((diamond, index) => {
+        const resolvedStoneId = (() => {
+          const candidate = (diamond as unknown as { id?: unknown; externalId?: unknown })
+            .id ?? (diamond as unknown as { externalId?: unknown }).externalId;
+          const num =
+            typeof candidate === "number"
+              ? candidate
+              : typeof candidate === "string"
+              ? Number(candidate)
+              : NaN;
+          return Number.isFinite(num) ? num : null;
+        })();
+
         const installment = (diamond.price / 12).toFixed(2);
-        const isFavorite = favorites.includes(diamond.id);
+        const isFavorite =
+          resolvedStoneId != null ? favorites.includes(resolvedStoneId) : false;
         const labelShape = shapeLabelMap[diamond.shape] ?? diamond.shape;
         const iconSvgFromShapes = shapeIconSvgMap?.get(labelShape);
         const settingPrice = diamond.price + 2000;
 
         return (
           <div
-            key={diamond.id}
+            key={resolvedStoneId ?? `${diamond.externalReportNo ?? "stone"}-${index}`}
             className={`group relative flex cursor-pointer flex-col overflow-visible rounded-[1.5rem] border border-gray-100 bg-white/95 p-2 sm:p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-[border-radius,_transform,_box-shadow,_border-color] duration-300 md:hover:-translate-y-2 md:hover:shadow-[0_25px_60px_rgba(15,23,42,0.18)] md:hover:z-20 md:hover:rounded-bl-none md:hover:rounded-br-none`}
             onClick={() =>
-              onMoreInfo?.({
-                ...diamond,
-                shapeIconSvg: diamond.shapeIconSvg ?? iconSvgFromShapes,
-              })
+              resolvedStoneId != null
+                ? onMoreInfo?.({
+                    ...diamond,
+                    id: resolvedStoneId,
+                    shapeIconSvg: diamond.shapeIconSvg ?? iconSvgFromShapes,
+                  })
+                : console.error("石头缺少可用的 id，无法打开详情", diamond)
             }
           >
             <div className="relative overflow-hidden rounded-[1.3rem] sm:rounded-[1.5rem] bg-gradient-to-br from-[#e8f0fb] via-white to-[#dfe9ff] p-3 sm:p-4 group-hover:rounded-bl-none group-hover:rounded-br-none">
@@ -283,8 +299,13 @@ export default function DiamondGrid({
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
+                    if (resolvedStoneId == null) {
+                      console.error("石头缺少可用的 id，无法打开详情", diamond);
+                      return;
+                    }
                     onMoreInfo?.({
                       ...diamond,
+                      id: resolvedStoneId,
                       shapeIconSvg: diamond.shapeIconSvg ?? iconSvgFromShapes,
                     });
                   }}
@@ -296,8 +317,13 @@ export default function DiamondGrid({
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
+                    if (resolvedStoneId == null) {
+                      console.error("石头缺少可用的 id，无法加入 pendant", diamond);
+                      return;
+                    }
                     onAddPendant?.({
                       ...diamond,
+                      id: resolvedStoneId,
                       shapeIconSvg: diamond.shapeIconSvg ?? iconSvgFromShapes,
                     });
                   }}
@@ -346,8 +372,13 @@ export default function DiamondGrid({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
+                      if (resolvedStoneId == null) {
+                        console.error("石头缺少可用的 id，无法打开详情", diamond);
+                        return;
+                      }
                       onMoreInfo?.({
                         ...diamond,
+                        id: resolvedStoneId,
                         shapeIconSvg: diamond.shapeIconSvg ?? iconSvgFromShapes,
                       });
                     }}
@@ -359,8 +390,13 @@ export default function DiamondGrid({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
+                      if (resolvedStoneId == null) {
+                        console.error("石头缺少可用的 id，无法加入 pendant", diamond);
+                        return;
+                      }
                       onAddPendant?.({
                         ...diamond,
+                        id: resolvedStoneId,
                         shapeIconSvg: diamond.shapeIconSvg ?? iconSvgFromShapes,
                       });
                     }}

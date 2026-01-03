@@ -20,8 +20,8 @@ import {
   knowSettingStats,
 } from "./ProductDetails";
 import {
-  fetchProductDetail,
-  fetchStoneDetail,
+  fetchProductDetailCached,
+  fetchStoneDetailCached,
   resolveBackendImageUrl,
   fetchProductCategories,
   fetchStoneFilters,
@@ -89,7 +89,7 @@ export default function ProductContainer({
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await fetchProductDetail(productId);
+        const data = await fetchProductDetailCached(productId);
         setProduct(data);
       } catch (e) {
         console.error("加载产品详情失败", e);
@@ -107,7 +107,7 @@ export default function ProductContainer({
 
     const load = async () => {
       try {
-        const data = await fetchStoneDetail(stoneId);
+        const data = await fetchStoneDetailCached(stoneId);
         setStone(data);
       } catch (e) {
         console.error("加载石头详情失败", e);

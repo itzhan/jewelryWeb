@@ -1,7 +1,7 @@
 "use client";
 
 import ProductDetails from "./ProductDetails";
-import type { StoneDetailDto } from "@/lib/backend";
+import type { BackendStoneType, StoneDetailDto } from "@/lib/backend";
 import { resolveBackendImageUrl } from "@/lib/backend";
 import { buildCertificateLink } from "@/lib/certificate";
 
@@ -48,6 +48,7 @@ type ProductSectionProps = {
   stoneDetail?: StoneDetailDto | null;
   productImages?: GalleryImage[];
   centerStoneShape?: string | null;
+  centerStoneType?: BackendStoneType | null;
   lockCenterStoneShape?: boolean;
 };
 
@@ -59,6 +60,7 @@ export default function ProductSection({
   stoneDetail,
   productImages,
   centerStoneShape,
+  centerStoneType,
   lockCenterStoneShape = false,
 }: ProductSectionProps) {
   const certificateLink = buildCertificateLink(stoneDetail);
@@ -302,6 +304,7 @@ export default function ProductSection({
         showBuySettingButton={showBuySettingButton}
         stoneDetail={stoneDetail}
         centerStoneShape={centerStoneShape}
+        centerStoneType={centerStoneType}
         lockCenterStoneShape={lockCenterStoneShape}
       />
 
